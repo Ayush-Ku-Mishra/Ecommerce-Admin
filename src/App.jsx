@@ -15,6 +15,7 @@ import HomeBannersList from "./Components/HomeBannersList";
 import AddHomeSlideModal from "./Components/AddHomeSlideModal";
 import CategoryList from "./Components/CategoryList";
 import AddCategory from "./Components/AddCategory";
+import SubCategoryList from "./Components/SubCategoryList";
 
 const router = createBrowserRouter([
   {
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
     { path: "add-home-banner-slide", element: <AddHomeSlideModal/> },
     { path: "category-list", element: <CategoryList/> },
     { path: "add-category", element: <AddCategory/> },
+    { path: "sub-category-list", element: <SubCategoryList/> },
   ],
 },
   {
