@@ -1,12 +1,22 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, createSlice } from '@reduxjs/toolkit';
 
-// You can add your slices/reducers here as you build them
+// Create a dummy slice just to avoid empty reducer errors
+const dummySlice = createSlice({
+  name: 'dummy',
+  initialState: { message: 'This is a dummy reducer' },
+  reducers: {
+    setMessage: (state, action) => {
+      state.message = action.payload;
+    }
+  }
+});
+
+export const { setMessage } = dummySlice.actions;
+
 export const store = configureStore({
   reducer: {
-    // Example: user: userReducer,
-    // profile: profileReducer,
-    // products: productsReducer,
-  },
+    dummy: dummySlice.reducer
+  }
 });
 
 export default store;
