@@ -18,23 +18,23 @@ import AddCategory from "./Components/AddCategory";
 
 const router = createBrowserRouter([
   {
-    path: "/", // Main Layout wrapper for all dashboard-style pages
-    element: <MainLayout />,
-    children: [
-      { path: "dashboard", element: <Dashboard /> },
-      { path: "product-list", element: <ProductList /> },
-      { path: "product-upload", element: <ProductUpload /> },
-      { path: "add-product-size", element: <AddSize/> },
-      { path: "add-product-weight", element: <AddWeight/> },
-      { path: "manage-logo", element: <ManageLogo/> },
-      { path: "orders", element: <Orders/> },
-      { path: "home-banners-list", element: <HomeBannersList/> },
-      { path: "add-home-banner-slide", element: <AddHomeSlideModal/> },
-      { path: "category-list", element: <CategoryList/> },
-      { path: "add-category", element: <AddCategory/> },
-      // add more dashboard child pages here if needed
-    ],
-  },
+  path: "/", 
+  element: <MainLayout />,
+  children: [
+    { index: true, element: <Dashboard /> }, // default page when at "/"
+    { path: "dashboard", element: <Dashboard /> },
+    { path: "product-list", element: <ProductList /> },
+    { path: "product-upload", element: <ProductUpload /> },
+    { path: "add-product-size", element: <AddSize/> },
+    { path: "add-product-weight", element: <AddWeight/> },
+    { path: "manage-logo", element: <ManageLogo/> },
+    { path: "orders", element: <Orders/> },
+    { path: "home-banners-list", element: <HomeBannersList/> },
+    { path: "add-home-banner-slide", element: <AddHomeSlideModal/> },
+    { path: "category-list", element: <CategoryList/> },
+    { path: "add-category", element: <AddCategory/> },
+  ],
+},
   {
     path: "/profile",
     element: <ProfilePage />, // Profile outside MainLayout
