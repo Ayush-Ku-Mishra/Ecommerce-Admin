@@ -1,6 +1,6 @@
-// src/redux/store.js
 import { configureStore } from '@reduxjs/toolkit';
 
+// Temporary "dummy" reducer so store isn't empty
 const dummyReducer = (state = {}, action) => state;
 
 export const store = configureStore({
@@ -8,5 +8,3 @@ export const store = configureStore({
     dummy: dummyReducer
   }
 });
-
-export default store;
