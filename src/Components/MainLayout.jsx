@@ -4,15 +4,15 @@ import NavbarPage from "./NavbarPage";
 import { Outlet } from "react-router-dom"; // <-- import Outlet!
 
 const MainLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
 
   useEffect(() => {
-    if (window.innerWidth >= 1024) {
-      setSidebarOpen(true);
-    } else {
-      setSidebarOpen(false);
-    }
-  }, []);
+  const handleResize = () => {
+    setSidebarOpen(window.innerWidth >= 1024);
+  };
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
   return (
     <div className="flex min-h-screen overflow-hidden">
