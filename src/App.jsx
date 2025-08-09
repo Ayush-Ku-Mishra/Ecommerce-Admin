@@ -13,6 +13,8 @@ import ManageLogo from "./Components/ManageLogo";
 import Orders from "./Components/Orders";
 import HomeBannersList from "./Components/HomeBannersList";
 import AddHomeSlideModal from "./Components/AddHomeSlideModal";
+import CategoryList from "./Components/CategoryList";
+import AddCategory from "./Components/AddCategory";
 
 const router = createBrowserRouter([
   {
@@ -28,6 +30,8 @@ const router = createBrowserRouter([
       { path: "orders", element: <Orders/> },
       { path: "home-banners-list", element: <HomeBannersList/> },
       { path: "add-home-banner-slide", element: <AddHomeSlideModal/> },
+      { path: "category-list", element: <CategoryList/> },
+      { path: "add-category", element: <AddCategory/> },
       // add more dashboard child pages here if needed
     ],
   },

@@ -59,15 +59,6 @@ const menuConfig = [
     ],
   },
   {
-    label: "Blogs",
-    icon: <TbBrandBlogger size={16} />,
-    path: "/blogs",
-    children: [
-      { label: "Add Blog", path: "/add-blog" },
-      { label: "Blog List", path: "/blog-list" },
-    ],
-  },
-  {
     label: "Manage Logo",
     icon: <MdOutlineManageAccounts size={16} />,
     path: "/manage-logo",
