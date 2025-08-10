@@ -103,7 +103,7 @@ const ROWS_PER_PAGE = 5;
 
 const ProductsSection = () => {
   const label = { inputProps: { "aria-label": "Checkbox demo" } };
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(false);
@@ -140,7 +140,6 @@ const ProductsSection = () => {
   ];
 
   // Calculate pagination
-  const count = Math.ceil(productData.length / ROWS_PER_PAGE);
   const pagedData = productData.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -194,14 +193,8 @@ const ProductsSection = () => {
     // Do NOT update setSelectAll here
   };
 
-  const allSelected =
-    pagedData.length > 0 &&
-    pagedData.every((_, idx) => selected[page * rowsPerPage + idx]);
-  const someSelected =
-    pagedData.some((_, idx) => selected[page * rowsPerPage + idx]) &&
-    !allSelected;
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (_, newPage) => {
     setPage(newPage);
   };
 

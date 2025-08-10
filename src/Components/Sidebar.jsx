@@ -54,8 +54,6 @@ const menuConfig = [
     children: [
       { label: "Home Banner List", path: "/home-banner-list" },
       { label: "Add Home Banner", path: "/add-home-banner" },
-      { label: "Home Banner List 2", path: "/home-banner-list-2" },
-      { label: "Add Banner", path: "/add-banner" },
     ],
   },
   {

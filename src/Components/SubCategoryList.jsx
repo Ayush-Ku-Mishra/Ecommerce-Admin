@@ -6,9 +6,10 @@ import {
   FaChevronRight,
   FaPlus,
 } from "react-icons/fa";
-import { IoImageOutline } from "react-icons/io5";
+import AddSubCategory from "./AddSubCategory";
 
 const SubCategoryList = () => {
+  const [showAddSubCategory, setShowAddSubCategory] = useState(false);
   // Sample hierarchical category data
   const [categories, setCategories] = useState([
     {
@@ -143,10 +144,8 @@ const SubCategoryList = () => {
   };
 
   const handleDelete = (item, level) => {
-    if (window.confirm(`Are you sure you want to delete this ${level}?`)) {
-      console.log(`Delete ${level}:`, item);
-      // Add your delete logic here
-    }
+    console.log(`Delete ${level}:`, item);
+    // Add your delete logic here
   };
 
   const handleAddSubcategory = (parentId, level) => {
@@ -182,11 +181,11 @@ const SubCategoryList = () => {
             Sub Category List
           </h1>
           <button
-            onClick={() => handleAddSubcategory(null, "main category")}
+            onClick={() => setShowAddSubCategory(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded-lg transition-colors flex items-center gap-2 shadow-md hover:shadow-lg"
           >
             <FaPlus className="w-3 h-3" />
-            Add Main Category
+            Add New Sub Category
           </button>
         </div>
 
@@ -313,6 +312,10 @@ const SubCategoryList = () => {
           </div>
         </div>
       </div>
+      {/* Render Modal */}
+      {showAddSubCategory && (
+        <AddSubCategory onClose={() => setShowAddSubCategory(false)} />
+      )}
     </div>
   );
 };
