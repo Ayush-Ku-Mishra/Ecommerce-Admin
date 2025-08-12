@@ -127,7 +127,7 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
                   className="!capitalize !rounded-full shadow-md hover:shadow-lg transition-all duration-300 
              flex items-center justify-center"
                   sx={{
-                    minWidth: { xs: 80, sm: 100, md: 110 }, // width changes per device
+                    minWidth: { xs: 70, sm: 100, md: 110 }, // width changes per device
                     height: { xs: 36, sm: 40, md: 44 }, // responsive height
                     fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.95rem" }, // responsive font size
                     px: { xs: 1.5, sm: 2.5, md: 3.5 }, // horizontal padding per device
