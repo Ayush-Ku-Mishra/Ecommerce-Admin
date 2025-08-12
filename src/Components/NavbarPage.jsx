@@ -123,17 +123,17 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
                   variant="contained"
                   color="primary"
                   onClick={() => navigate("/signup")}
-                  className="
-                    !capitalize 
-                    !rounded-full 
-                    !min-w-0
-                    flex items-center justify-center 
-                    shadow-md hover:shadow-lg transition-all duration-300
-                    h-9 sm:h-10 md:h-11             /* Height changes for phone/tab/laptop */
-                    px-4 sm:px-5 md:px-6            /* Padding changes per device */
-                    text-xs sm:text-sm md:text-base /* Font size changes per device */
-                    bg-blue-600 hover:bg-blue-700   /* Brand colors */
-                  "
+                  // Common styles for all devices
+                  className="!capitalize !rounded-full shadow-md hover:shadow-lg transition-all duration-300 
+             flex items-center justify-center"
+                  sx={{
+                    minWidth: { xs: 80, sm: 100, md: 110 }, // width changes per device
+                    height: { xs: 36, sm: 40, md: 44 }, // responsive height
+                    fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.95rem" }, // responsive font size
+                    px: { xs: 1.5, sm: 2.5, md: 3.5 }, // horizontal padding per device
+                    bgcolor: "#1976d2", // override with your brand color
+                    "&:hover": { bgcolor: "#1565c0" }, // darker on hover
+                  }}
                 >
                   Sign Up
                 </Button>
