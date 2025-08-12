@@ -12,23 +12,22 @@ import { FaRegUser } from "react-icons/fa6";
 import { LiaSignOutAltSolid } from "react-icons/lia";
 import Sidebar from "../Components/Sidebar";
 
+// Helper to get initials from a name
+const getInitials = (name = "User") => {
+  const parts = name.trim().split(" ");
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
 const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
   const toggleSidebar = () => {
     setSidebarOpen((prev) => !prev);
   };
 
-  const getInitials = (fullName) => {
-    const names = fullName.trim().split(" ");
-    if (names.length === 0) return "";
-    if (names.length === 1) return names[0][0].toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
-
-  // Hardcoded user for this demo (replace with real user data as needed)
-  const user = {
-    name: "Ayush Kumar Mishra",
-    email: "amishra59137@gmail.com",
-  };
+  // Placeholder user data (set to null to simulate logged out state)
+  const user = null;
+  // const user = null; // Uncomment this to test the Sign Up layout
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -40,15 +39,12 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-
   const handleProfileClick = () => {
     navigate("/profile");
     handleMenuClose();
   };
-
   const handleLogoutClick = () => {
-    // replace with your logout logic
-    alert("Logged out");
+    alert("Logged out"); // Replace with actual logout logic
     handleMenuClose();
   };
 
@@ -57,20 +53,19 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
       {/* Sidebar */}
       {sidebarOpen && (
         <div className="fixed top-0 left-0 h-screen w-64 z-40 transition-all duration-300">
-          <Sidebar setSidebarOpen={setSidebarOpen}/>
+          <Sidebar setSidebarOpen={setSidebarOpen} />
         </div>
       )}
 
-      {/* Everything else shifts right when sidebarOpen. Margin changed to ml-64 to match sidebar width */}
+      {/* Main layout shift when sidebar is open */}
       <div
         className={`flex-1 transition-all duration-600 ${
           sidebarOpen ? "lg:ml-64" : "ml-0"
         }`}
       >
         <div className="w-full bg-white h-[50px] flex items-center justify-between px-6 shadow-md fixed top-0 left-0 right-0 z-30">
-          {/* Left group: logo fixed, menu icon shifts */}
+          {/* Left group: logo + menu button */}
           <div className="flex items-center gap-8">
-            {/* Logo - no margin shift */}
             <Link to="/dashboard">
               <img
                 src={Logo}
@@ -79,7 +74,6 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
               />
             </Link>
 
-            {/* Menu icon button - applies margin shift alone */}
             <div
               className={`transition-all duration-500 ${
                 sidebarOpen ? "lg:ml-20" : "ml-0"
@@ -95,31 +89,58 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
             </div>
           </div>
 
-          {/* Right group (notifications, avatar) stays fixed, unshifted */}
+          {/* Right group: notifications + avatar/sign up */}
           <div className="flex items-center gap-5 pr-2 overflow-hidden">
             <Button className="!w-[40px] !h-[40px] !rounded-full !min-w-[40px]">
               <IoMdNotificationsOutline className="text-[27px] text-gray-700" />
             </Button>
 
-            <Button
-              onClick={handleAvatarClick}
-              className="!p-0 !min-w-0 !rounded-full"
-              aria-controls={open ? "account-menu" : undefined}
-              aria-haspopup="true"
-              aria-expanded={open ? "true" : undefined}
-            >
-              <Avatar
-                sx={{
-                  width: 36,
-                  height: 36,
-                  fontSize: "1rem",
-                  bgcolor: "#455a64",
-                }}
-              >
-                {getInitials(user.name)}
-              </Avatar>
-            </Button>
+            {/* Conditional user display */}
+            <div>
+              {user ? (
+                // Logged in: Avatar button
+                <Button
+                  onClick={handleAvatarClick}
+                  className="!p-0 !min-w-0 !rounded-full"
+                  aria-controls={open ? "account-menu" : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={open ? "true" : undefined}
+                >
+                  <Avatar
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      fontSize: "1rem",
+                      bgcolor: "#455a64",
+                    }}
+                  >
+                    {getInitials(user.name || "User Name")}
+                  </Avatar>
+                </Button>
+              ) : (
+                // Logged out: Sign Up button
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => navigate("/signup")}
+                  className="
+                    !capitalize 
+                    !rounded-full 
+                    !min-w-0
+                    flex items-center justify-center 
+                    shadow-md hover:shadow-lg transition-all duration-300
+                    h-9 sm:h-10 md:h-11             /* Height changes for phone/tab/laptop */
+                    px-4 sm:px-5 md:px-6            /* Padding changes per device */
+                    text-xs sm:text-sm md:text-base /* Font size changes per device */
+                    bg-blue-600 hover:bg-blue-700   /* Brand colors */
+                  "
+                >
+                  Sign Up
+                </Button>
+              )}
+            </div>
 
+            {/* Avatar Dropdown Menu */}
             <Menu
               anchorEl={anchorEl}
               open={open}
@@ -135,7 +156,8 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
                   "& .MuiAvatar-root": {
                     width: 36,
                     height: 36,
-                    ml: 0,
+                    fontSize: "1rem",
+                    bgcolor: "#455a64",
                     mr: 2,
                   },
                   "&::before": {
@@ -155,32 +177,21 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
               anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
               transformOrigin={{ horizontal: "right", vertical: "top" }}
             >
-              {/* User info at top */}
+              {/* User info */}
               <div className="px-3 py-2 flex items-center min-w-[220px]">
-                <div>
-                  <Avatar
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      fontSize: "1rem",
-                      bgcolor: "#455a64",
-                    }}
-                  >
-                    {getInitials(user.name)}
-                  </Avatar>
-                </div>
+                <Avatar>{getInitials(user?.name)}</Avatar>
                 <div className="flex flex-col">
                   <span
                     className="font-semibold text-gray-800 text-[14px] truncate"
-                    title={user.name}
+                    title={user?.name}
                   >
-                    {user.name}
+                    {user?.name}
                   </span>
                   <span
                     className="text-gray-500 text-[12px] truncate"
-                    title={user.email}
+                    title={user?.email}
                   >
-                    {user.email}
+                    {user?.email}
                   </span>
                 </div>
               </div>
@@ -190,23 +201,17 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
                 onClick={handleProfileClick}
                 className="flex items-center gap-2 text-[15px]"
               >
-                <Link to="/account/profile" className="flex items-center gap-2">
-                  <FaRegUser /> My Account
-                </Link>
+                <FaRegUser /> My Account
               </MenuItem>
               <MenuItem
                 onClick={handleLogoutClick}
                 className="flex items-center gap-2 text-[15px]"
               >
-                <Link to="/account/profile" className="flex items-center gap-2">
-                  <LiaSignOutAltSolid className="text-[18px]" /> Sign Out
-                </Link>
+                <LiaSignOutAltSolid className="text-[18px]" /> Sign Out
               </MenuItem>
             </Menu>
           </div>
         </div>
-
-        {/* Placeholder for other main content below navbar */}
       </div>
     </div>
   );

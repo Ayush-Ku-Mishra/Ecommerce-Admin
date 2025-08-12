@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { CiEdit } from "react-icons/ci";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import AddHomeBanner from "./AddHomeBanner"; // Make sure this path is correct
+import { useNavigate } from 'react-router-dom';
 
 const HomeBannerList = () => {
   const [banners, setBanners] = useState([
@@ -21,6 +23,9 @@ const HomeBannerList = () => {
     }
   ]);
 
+  const [isBannerModalOpen, setBannerModalOpen] = useState(false);
+  const navigate = useNavigate();
+
   const handleEdit = (id) => {
     console.log('Edit banner:', id);
     // Add edit functionality here
@@ -30,9 +35,21 @@ const HomeBannerList = () => {
     setBanners(banners.filter(banner => banner.id !== id));
   };
 
+  // Open AddHomeBanner modal
   const handleAddBanner = () => {
-    console.log('Add new banner');
-    // Add new banner functionality here
+    setBannerModalOpen(true);
+  };
+
+  // Receive new banner from AddHomeBanner
+  const handleBannerAdded = (newBanner) => {
+    setBanners(prev => [...prev, newBanner]);
+    setBannerModalOpen(false);
+  };
+
+  // Close modal without adding
+  const handleBannerModalClose = () => {
+    setBannerModalOpen(false);
+    navigate(-1);
   };
 
   return (
@@ -106,6 +123,14 @@ const HomeBannerList = () => {
           <div className="mt-4 text-sm text-gray-600">
             Showing {banners.length} banner{banners.length !== 1 ? 's' : ''}
           </div>
+        )}
+
+        {/* Add Banner Modal */}
+        {isBannerModalOpen && (
+          <AddHomeBanner
+            onClose={handleBannerModalClose}
+            onAddBanner={handleBannerAdded}
+          />
         )}
       </div>
     </div>
