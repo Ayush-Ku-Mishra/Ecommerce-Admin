@@ -4,8 +4,11 @@ import { TbCategoryPlus } from "react-icons/tb";
 import { MdOutlineSettings } from "react-icons/md";
 import { MdOutlineRateReview } from "react-icons/md";
 import { VscVerifiedFilled } from "react-icons/vsc";
+import { useLocation } from "react-router-dom";
 
 const ProductDetails = () => {
+  const { pathname } = useLocation();
+
   // Sample product data
   const productImages = [
     "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400&h=500&fit=crop",
@@ -28,6 +31,11 @@ const ProductDetails = () => {
       setImageKey(Date.now());
     }
   };
+
+  useEffect(() => {
+    // Scroll to top on any route change
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
