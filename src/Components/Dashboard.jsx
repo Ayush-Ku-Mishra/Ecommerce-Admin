@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { FaPlus } from "react-icons/fa";
 import { FaUsers } from "react-icons/fa";
 import { MdCategory } from "react-icons/md";
@@ -6,65 +6,121 @@ import { GoGift } from "react-icons/go";
 import { IoStatsChartSharp } from "react-icons/io5";
 import { RiProductHuntLine } from "react-icons/ri";
 import { PiClockCountdown } from "react-icons/pi";
-import { useState } from "react";
 import ProductsSection from "./ProductsSection";
 import RecentOrders from "./RecentOrders";
 import Charts from "./Charts";
 import AddProduct from "./AddProduct";
-
-// You can replace these with your actual dynamic values as needed
-const stats = [
-  {
-    name: "Total Users",
-    value: 2549,
-    icon: <FaUsers className="text-3xl text-white" />,
-    icon2: <IoStatsChartSharp className="text-3xl text-white" />,
-    bg: "bg-[#24b47e]", // green
-  },
-  {
-    name: "Total Orders",
-    value: 636,
-    icon: <GoGift className="text-3xl text-white" />,
-    icon2: <PiClockCountdown className="text-[33px] text-white" />,
-    bg: "bg-[#2279e0]", // blue
-  },
-  {
-    name: "Total Products",
-    value: 50,
-    icon: <RiProductHuntLine className="text-3xl text-white" />,
-    icon2: <IoStatsChartSharp className="text-3xl text-white" />,
-    bg: "bg-[#4c45c7]", // purple
-  },
-  {
-    name: "Total Category",
-    value: 10,
-    icon: <MdCategory className="text-3xl text-white" />,
-    icon2: <IoStatsChartSharp className="text-3xl text-white" />,
-    bg: "bg-[#fd396e]", // pink/red
-  },
-];
+import { Context } from "../main"; // Adjust the import path to where Context is defined
 
 const Dashboard = () => {
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+
+  // Dynamic state for users, categories, and products count
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalCategories, setTotalCategories] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  // Get user from global context
+  const { user } = useContext(Context);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch users count
+        try {
+          const usersRes = await fetch("/api/v1/user/count");
+          if (!usersRes.ok) throw new Error("Failed to fetch users count");
+          const usersData = await usersRes.json();
+          setTotalUsers(usersData.count || 0);
+        } catch (userErr) {
+          console.error("Users fetch error:", userErr);
+          setTotalUsers(0);
+        }
+
+        // Fetch categories
+        try {
+          const categoriesRes = await fetch("/api/v1/category/get-categories");
+          if (!categoriesRes.ok) throw new Error("Failed to fetch categories");
+          const categoriesData = await categoriesRes.json();
+          const rootCategories =
+            categoriesData.data?.filter((cat) => !cat.parentId) || [];
+          setTotalCategories(rootCategories.length);
+        } catch (categoryErr) {
+          console.error("Categories fetch error:", categoryErr);
+          setTotalCategories(0);
+        }
+
+        // Fetch products count
+        try {
+          const productsRes = await fetch("/api/v1/product/getProductsCount");
+          if (!productsRes.ok)
+            throw new Error("Failed to fetch products count");
+          const productsData = await productsRes.json();
+          setTotalProducts(productsData.count || 0);
+        } catch (productErr) {
+          console.error("Products fetch error:", productErr);
+          setTotalProducts(0);
+        }
+      } catch (error) {
+        console.error("General stats fetch error:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Stats array using dynamic values
+  const stats = [
+    {
+      name: "Total Users",
+      value: totalUsers,
+      icon: <FaUsers className="text-3xl text-white" />,
+      icon2: <IoStatsChartSharp className="text-3xl text-white" />,
+      bg: "bg-[#24b47e]", // green
+    },
+    {
+      name: "Total Orders",
+      value: 636,
+      icon: <GoGift className="text-3xl text-white" />,
+      icon2: <PiClockCountdown className="text-[33px] text-white" />,
+      bg: "bg-[#2279e0]", // blue
+    },
+    {
+      name: "Total Products",
+      value: totalProducts,
+      icon: <RiProductHuntLine className="text-3xl text-white" />,
+      icon2: <IoStatsChartSharp className="text-3xl text-white" />,
+      bg: "bg-[#4c45c7]", // purple
+    },
+    {
+      name: "Total Category",
+      value: totalCategories,
+      icon: <MdCategory className="text-3xl text-white" />,
+      icon2: <IoStatsChartSharp className="text-3xl text-white" />,
+      bg: "bg-[#fd396e]", // pink/red
+    },
+  ];
+
   return (
     <div className="w-full pl-4 pr-2 py-5 min-w-0">
-      <div className="rounded-lg bg-[#f1faff] flex flex-col px-5 py-2 md:flex-row items-center justify-between mb-4 shadow-sm border border-[#0000001a]">
+      <div className="rounded-lg bg-[#f1afff] flex flex-col px-5 py-2 md:flex-row items-center justify-between mb-4 shadow-sm border border-[#0000001a]">
         <div className="flex-1">
-          <h2 className="text-[35px] leading-10 font-bold text-black mb-3">
+          <h2 className="text-4xl font-bold leading-tight mb-3 text-black">
             Welcome,
             <br />
-            <span className="text-[#3872fa] font-bold">Ayush Kumar Mishra</span>
+            <span className="text-blue-600 font-bold">
+              {user ? user.name : "User"}
+            </span>
           </h2>
-
           <p className="text-gray-600 mb-5">
-            Here's what happening on your store today. See the statistics at
+            Here's what’s happening on your store today. See the statistics at
             once.
           </p>
           <button
             onClick={() => setIsAddProductOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563eb] hover:bg-[#1e48a4] transition text-white rounded shadow font-medium text-base"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-blue-700 hover:bg-blue-800 text-white font-medium"
           >
-            <FaPlus className="text-white text-[16px]" />
+            <FaPlus className="text-lg" />
             Add Product
           </button>
         </div>

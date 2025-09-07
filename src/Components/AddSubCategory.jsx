@@ -1,10 +1,13 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { IoClose, IoCloudUpload, IoChevronDown } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
-const AddSubCategory = () => {
+const AddSubCategory = ({ onClose }) => {
   // Separate refs for each form
   const subCatNameRef = useRef();
   const thirdLevelNameRef = useRef();
@@ -12,29 +15,77 @@ const AddSubCategory = () => {
 
   // Separate states for each form
   const [selectedCategoryForSub, setSelectedCategoryForSub] = useState("");
-  const [selectedCategoryForThird, setSelectedCategoryForThird] = useState("");
+  const [selectedSubCategoryForThird, setSelectedSubCategoryForThird] =
+    useState("");
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sample data
-  const categories = [
-    { id: 1, name: "Fashion" },
-    { id: 2, name: "Electronics" },
-    { id: 3, name: "Books" },
-    { id: 4, name: "Home & Garden" },
-    { id: 5, name: "Sports" },
-  ];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  const subCategories = [
-    { id: 1, name: "Women", parentId: 1 },
-    { id: 2, name: "Men", parentId: 1 },
-    { id: 3, name: "Girls", parentId: 1 },
-    { id: 4, name: "Mobiles", parentId: 2 },
-    { id: 5, name: "Laptops", parentId: 2 },
-  ];
+  // Fetch categories from API
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/category/get-categories`,
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        const flattenCategories = (categories) => {
+          let result = [];
+          categories.forEach((category) => {
+            result.push(category);
+            if (category.children?.length) {
+              result = result.concat(flattenCategories(category.children));
+            }
+          });
+          return result;
+        };
+
+        const allCategories = flattenCategories(response.data.data || []);
+
+        // Main categories (no parentId)
+        const mainCategories = allCategories.filter((cat) => !cat.parentId);
+        setCategories(mainCategories);
+
+        // Sub categories (have parentId but no grandparent)
+        const subCats = allCategories.filter((cat) => cat.parentId);
+        setSubCategories(subCats);
+      } else {
+        toast.error(response.data.message || "Failed to fetch categories");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to fetch categories. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter subcategories based on selected main category
+  const getFilteredSubCategories = () => {
+    if (!selectedCategoryForSub) return [];
+    return subCategories.filter(
+      (subCat) =>
+        subCat.parentId &&
+        subCat.parentId.toString() === selectedCategoryForSub.toString()
+    );
+  };
 
   // Close modal
   const handleClose = () => {
-    console.log("Close modal");
-    navigate(-1);
+    if (onClose) {
+      onClose();
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleBackdropClick = (e) => {
@@ -42,11 +93,11 @@ const AddSubCategory = () => {
   };
 
   // Submit for Sub Category
-  const handlePublishSubCategory = () => {
+  const handlePublishSubCategory = async () => {
     const name = subCatNameRef.current?.value.trim();
 
     if (!selectedCategoryForSub) {
-      toast.error("Please select a product category.");
+      toast.error("Please select a parent category.");
       return;
     }
     if (!name) {
@@ -54,29 +105,126 @@ const AddSubCategory = () => {
       return;
     }
 
-    toast.success("Sub Category published successfully!");
-    subCatNameRef.current.value = "";
-    setSelectedCategoryForSub("");
-    setTimeout(() => handleClose(), 2000);
+    const selectedCategory = categories.find(
+      (cat) => cat._id.toString() === selectedCategoryForSub.toString()
+    );
+
+    if (!selectedCategory) {
+      toast.error("Invalid parent category selected.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const categoryData = {
+        name: name,
+        parentId: selectedCategoryForSub,
+        parentCatName: selectedCategory.name,
+        // No images field for subcategories
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/category/createCategory`,
+        categoryData,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Sub Category created successfully!");
+        subCatNameRef.current.value = "";
+        setSelectedCategoryForSub("");
+
+        // Refresh categories to get updated list
+        await fetchCategories();
+
+        setTimeout(() => {
+          setIsSubmitting(false);
+          handleClose();
+        }, 2000);
+      } else {
+        setIsSubmitting(false);
+        toast.error(response.data.message || "Failed to create sub category");
+      }
+    } catch (error) {
+      console.error("Create subcategory error:", error);
+      setIsSubmitting(false);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to create sub category. Please try again."
+      );
+    }
   };
 
   // Submit for Third Level Category
-  const handlePublishThirdLevel = () => {
+  const handlePublishThirdLevel = async () => {
     const name = thirdLevelNameRef.current?.value.trim();
 
-    if (!selectedCategoryForThird) {
-      toast.error("Please select a product category.");
+    if (!selectedSubCategoryForThird) {
+      toast.error("Please select a sub category.");
       return;
     }
     if (!name) {
-      toast.error("Please enter a sub category name.");
+      toast.error("Please enter a third level category name.");
       return;
     }
 
-    toast.success("Third Level Category published successfully!");
-    thirdLevelNameRef.current.value = "";
-    setSelectedCategoryForThird("");
-    setTimeout(() => handleClose(), 2000);
+    const selectedSubCategory = subCategories.find(
+      (subCat) => subCat._id === selectedSubCategoryForThird
+    );
+    if (!selectedSubCategory) {
+      toast.error("Invalid sub category selected.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const categoryData = {
+        name: name,
+        parentId: selectedSubCategoryForThird,
+        parentCatName: selectedSubCategory.name,
+        // No images field for third level categories
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/category/createCategory`,
+        categoryData,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Third Level Category created successfully!");
+        thirdLevelNameRef.current.value = "";
+        setSelectedSubCategoryForThird("");
+
+        // Refresh categories to get updated list
+        await fetchCategories();
+
+        setTimeout(() => {
+          setIsSubmitting(false);
+          handleClose();
+        }, 2000);
+      } else {
+        setIsSubmitting(false);
+        toast.error(
+          response.data.message || "Failed to create third level category"
+        );
+      }
+    } catch (error) {
+      console.error("Create third level category error:", error);
+      setIsSubmitting(false);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to create third level category. Please try again."
+      );
+    }
   };
 
   return (
@@ -84,15 +232,15 @@ const AddSubCategory = () => {
       className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-start justify-center"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white w-full max-w-8xl mx-auto min-h-screen flex flex-col shadow-xl relative">
+      <div className="bg-white w-full max-w-6xl mx-auto mt-8 mb-8 max-h-[90vh] overflow-y-auto flex flex-col shadow-xl relative rounded-lg">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-2 border-b bg-gray-100 shadow-md">
-          <h2 className="text-lg md:text-xl font-semibold text-gray-900">
-            Add Categories
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50 rounded-t-lg">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Add Sub Categories
           </h2>
           <button
             onClick={handleClose}
-            className="p-2 rounded hover:bg-gray-200 transition"
+            className="p-2 rounded-full hover:bg-gray-200 transition"
           >
             <IoClose className="w-6 h-6 text-gray-500" />
           </button>
@@ -101,33 +249,39 @@ const AddSubCategory = () => {
         {/* Content */}
         <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Add Sub Category */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-gray-900">
-              Add Sub Category
-            </h3>
+          <div className="bg-gray-50 rounded-lg p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                1
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Add Sub Category
+              </h3>
+            </div>
 
-            {/* Product Category Dropdown */}
+            {/* Parent Category Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Category
+                Select Parent Category *
               </label>
               <div className="relative">
                 <select
                   value={selectedCategoryForSub}
                   onChange={(e) => setSelectedCategoryForSub(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                             focus:ring-blue-500 appearance-none bg-white text-gray-900"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
+                             focus:ring-blue-500 focus:border-transparent appearance-none bg-white text-gray-900"
+                  disabled={isSubmitting}
                 >
-                  <option value="">Select a category</option>
+                  <option value="">Choose a parent category</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+                    <option key={cat._id} value={cat._id}>
                       {cat.name}
                     </option>
                   ))}
                 </select>
                 <IoChevronDown
                   className="absolute right-3 top-1/2 -translate-y-1/2 
-                                           w-4 h-4 text-gray-400 pointer-events-none"
+                                           w-5 h-5 text-gray-400 pointer-events-none"
                 />
               </div>
             </div>
@@ -135,84 +289,118 @@ const AddSubCategory = () => {
             {/* Sub Category Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sub Category Name
+                Sub Category Name *
               </label>
               <input
                 ref={subCatNameRef}
                 type="text"
                 placeholder="Enter sub category name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                           focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
+                           focus:ring-blue-500 focus:border-transparent"
+                disabled={isSubmitting}
               />
             </div>
 
             {/* Publish Button */}
             <button
               onClick={handlePublishSubCategory}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 
-                         rounded-lg flex items-center justify-center gap-2 shadow-md"
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 
+                         rounded-lg flex items-center justify-center gap-2 shadow-md transition-colors"
             >
-              <IoCloudUpload className="w-5 h-5" /> PUBLISH AND VIEW
+              <IoCloudUpload className="w-5 h-5" />
+              {isSubmitting ? "CREATING..." : "CREATE SUB CATEGORY"}
             </button>
           </div>
 
           {/* Add Third Level Category */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-gray-900">
-              Add Third Level Category
-            </h3>
+          <div className="bg-green-50 rounded-lg p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-semibold">
+                2
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Add Third Level Category
+              </h3>
+            </div>
 
-            {/* Product Category Dropdown */}
+            {/* Sub Category Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Product Category
+                Select Sub Category *
               </label>
               <div className="relative">
                 <select
-                  value={selectedCategoryForThird}
-                  onChange={(e) => setSelectedCategoryForThird(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                             focus:ring-blue-500 appearance-none bg-white text-gray-900"
+                  value={selectedSubCategoryForThird}
+                  onChange={(e) =>
+                    setSelectedSubCategoryForThird(e.target.value)
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
+                             focus:ring-green-500 focus:border-transparent appearance-none bg-white text-gray-900"
+                  disabled={isSubmitting}
                 >
-                  <option value="">Select a category</option>
-                  {subCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                  <option value="">Choose a sub category</option>
+                  {subCategories.map((subCat) => (
+                    <option key={subCat._id} value={subCat._id}>
+                      {subCat.name} (under {subCat.parentCatName})
                     </option>
                   ))}
                 </select>
                 <IoChevronDown
                   className="absolute right-3 top-1/2 -translate-y-1/2 
-                                           w-4 h-4 text-gray-400 pointer-events-none"
+                                           w-5 h-5 text-gray-400 pointer-events-none"
                 />
               </div>
             </div>
 
-            {/* Sub Category Name (for third level) */}
+            {/* Third Level Category Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sub Category Name
+                Third Level Category Name *
               </label>
               <input
                 ref={thirdLevelNameRef}
                 type="text"
-                placeholder="Enter sub category name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                           focus:ring-blue-500"
+                placeholder="Enter third level category name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 
+                           focus:ring-green-500 focus:border-transparent"
+                disabled={isSubmitting}
               />
             </div>
 
             {/* Publish Button */}
             <button
               onClick={handlePublishThirdLevel}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 
-                         rounded-lg flex items-center justify-center gap-2 shadow-md"
+              disabled={isSubmitting}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-6 
+                         rounded-lg flex items-center justify-center gap-2 shadow-md transition-colors"
             >
-              <IoCloudUpload className="w-5 h-5" /> PUBLISH AND VIEW
+              <IoCloudUpload className="w-5 h-5" />
+              {isSubmitting ? "CREATING..." : "CREATE THIRD LEVEL CATEGORY"}
             </button>
           </div>
         </div>
+
+        {/* Info Section */}
+        <div className="border-t bg-blue-50 px-6 py-4 rounded-b-lg">
+          <div className="text-sm text-blue-700">
+            <strong>Note:</strong> Categories available: {categories.length}{" "}
+            main categories,
+            {subCategories.length} sub categories. Sub categories will be
+            created under main categories, and third level categories will be
+            created under sub categories.
+          </div>
+        </div>
       </div>
+
+      {/* MUI Backdrop for loading */}
+      <Backdrop
+        sx={(theme) => ({ color: "#fff", zIndex: theme.zIndex.drawer + 1 })}
+        open={isSubmitting}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       <ToastContainer
         position="top-center"
         autoClose={3000}

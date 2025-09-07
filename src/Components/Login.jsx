@@ -1,20 +1,177 @@
-import React, { useState } from "react";
-import { MdEmail, MdLock, MdVisibility, MdVisibilityOff } from "react-icons/md";
-import { FcGoogle } from "react-icons/fc";
+import React, { useContext, useEffect, useState } from "react";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { Context } from "../main";
+import axios from "axios";
+import { toast } from "react-toastify";
 import Logo from "../assets/PickoraLogo1.png";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
+import LoginComponent from "../pages/LoginComponent";
+import RegisterComponent from "../pages/RegisterComponent";
+import OtpVerification from "../pages/OtpVerification";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Add login/register toggle state
+  const [isLogin, setIsLogin] = useState(true);
+
+  // Views: otp, forgotPassword, resetPassword
+  const [currentView, setCurrentView] = useState("login");
+  const [resetEmail, setResetEmail] = useState("");
+  const [registerLoading, setRegisterLoading] = useState(false); // loader state
+
+  // We will store registration email/phone for OTP screen if needed.
+  const [registerData, setRegisterData] = useState({ email: "", phone: "" });
+
+  // Sync isLogin and currentView for login/register toggling
+  useEffect(() => {
+    if (isLogin && currentView !== "login") {
+      setCurrentView("login");
+    } else if (!isLogin && currentView !== "register") {
+      setCurrentView("register");
+    }
+  }, [isLogin]);
+
+  // Using react-hook-form for login and register forms
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
+
+  // Show password state for login and registration password fields
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Login attempt:", { email, password });
+  // Determine where to redirect after login (Wishlist page or home)
+  const redirectTo = location.state?.from?.pathname || "/";
+
+  if (isAuthenticated) {
+    return <Navigate to={redirectTo} replace />;
+  }
+
+  const onSubmit = async (data) => {
+    if (currentView === "register") {
+      setRegisterLoading(true); // show loader
+      data.phone = data.phone.startsWith("+91")
+        ? data.phone
+        : `+91${data.phone}`;
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`,
+          data,
+          {
+            withCredentials: true,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        toast.success(response.data.message);
+        setRegisterData({
+          email: data.email,
+          phone: data.phone,
+          verificationMethod: data.verificationMethod, // user’s actual choice
+        });
+        setCurrentView("otp");
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Registration failed");
+      } finally {
+        setRegisterLoading(false); // hide loader after request
+      }
+      return;
+    }
+
+    if (currentView === "login") {
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`,
+          { email: data.email, password: data.password },
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        toast.success(response.data.message);
+        setIsAuthenticated(true);
+        setUser(response.data.user);
+        navigate(redirectTo, { replace: true }); // <--- Redirect to wishlist or home
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Login failed");
+      }
+    }
   };
 
   const handleGoogleSignIn = () => {
-    console.log("Google sign in clicked");
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google/callback`;
+  };
+
+  const toggleLoginRegister = () => {
+    setIsLogin(!isLogin);
+    clearAllStates();
+    reset(); // Clear react-hook-form fields on toggle
+  };
+
+  const handleForgotPasswordBack = () => {
+    setCurrentView("login");
+    setIsLogin(true);
+  };
+
+  const handleResetPasswordRequest = (email) => {
+    setResetEmail(email);
+    setCurrentView("resetPassword");
+  };
+
+  const handleResetPasswordBack = () => {
+    setCurrentView("forgotPassword");
+  };
+
+  const handleResetPasswordSuccess = () => {
+    setResetEmail("");
+    setCurrentView("login");
+    setIsLogin(true);
+  };
+
+  const clearAllStates = () => {
+    reset();
+    setShowPassword(false);
+  };
+
+  const renderHeader = () => {
+    const titles = {
+      login: "Welcome Back",
+      register: "Create Account",
+      otp: "Verify OTP",
+      forgotPassword: "Forgot Password",
+      resetPassword: "Reset Password",
+    };
+    return (
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center mb-2">
+          <img
+            src="/PickoraFavicon.png"
+            alt="Pickora Icon"
+            className="w-10 h-10 sm:w-11 sm:h-11 md:w-11 md:h-11 rounded-full object-cover"
+          />
+        </div>
+        <img
+          src={Logo}
+          alt="Pickora Logo"
+          className="mx-auto h-10 sm:h-10 md:h-12"
+        />
+        {titles[currentView] && (
+          <p className="text-gray-600 text-sm mt-2">{titles[currentView]}</p>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -26,111 +183,63 @@ const Login = () => {
       }}
     >
       <div className="w-full max-w-sm bg-transparent rounded-2xl shadow-2xl overflow-hidden">
-        <div className="p-6">
-          {/* Logo Section */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center mb-2">
-              <img
-                src="/PickoraFavicon.png"
-                alt="Image 1"
-                className="w-10 h-10 sm:w-11 sm:h-11 md:w-11 md:h-11 rounded-full object-cover"
-              />
-            </div>
-            <img
-              src={Logo}
-              alt="ECOMMERCE Logo"
-              className="mx-auto h-10 sm:h-10 md:h-12"
+        <div className="p-10">
+          {renderHeader()}
+          {/* Loader only for register form */}
+          {currentView === "register" && (
+            <Backdrop
+              sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+              open={registerLoading}
+            >
+              <CircularProgress color="inherit" />
+            </Backdrop>
+          )}
+          {currentView === "otp" && (
+            <OtpVerification
+              email={registerData.email}
+              phone={registerData.phone}
+              verificationMethod={registerData.verificationMethod}
+              setCurrentView={setCurrentView}
+              setIsLogin={setIsLogin}
+              clearAllStates={clearAllStates}
             />
-          </div>
-
-          {/* Login Form */}
-          <div className="space-y-4">
-            {/* Email Input */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <MdEmail className="h-5 w-5 text-gray-600" />
-              </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="enter your email"
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                required
+          )}
+          {currentView === "forgotPassword" && (
+            <ForgotPassword
+              onBack={handleForgotPasswordBack}
+              onResetPassword={handleResetPasswordRequest}
+            />
+          )}
+          {currentView === "resetPassword" && (
+            <ResetPassword
+              email={resetEmail}
+              onBack={handleResetPasswordBack}
+              onSuccess={handleResetPasswordSuccess}
+            />
+          )}
+          {["login", "register"].includes(currentView) &&
+            (isLogin ? (
+              <LoginComponent
+                register={register}
+                handleSubmit={handleSubmit(onSubmit)}
+                errors={errors}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+                setCurrentView={setCurrentView}
+                handleGoogleSignIn={handleGoogleSignIn}
+                toggleLoginRegister={toggleLoginRegister}
               />
-            </div>
-
-            {/* Password Input */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <MdLock className="h-5 w-5 text-gray-600" />
-              </div>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="enter your password"
-                className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                required
+            ) : (
+              <RegisterComponent
+                register={register}
+                handleSubmit={handleSubmit(onSubmit)}
+                errors={errors}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+                handleGoogleSignIn={handleGoogleSignIn}
+                toggleLoginRegister={toggleLoginRegister}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center"
-              >
-                {showPassword ? (
-                  <MdVisibilityOff className="h-5 w-5 text-gray-600 hover:text-gray-600" />
-                ) : (
-                  <MdVisibility className="h-5 w-5 text-gray-600 hover:text-gray-600" />
-                )}
-              </button>
-            </div>
-
-            {/* Sign In Button */}
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Sign In
-            </button>
-
-            {/* Forgot Password */}
-            <div className="text-center">
-              <button
-                type="button"
-                className="text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors duration-200"
-              >
-                FORGOT PASSWORD
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="relative flex items-center justify-center py-4">
-              <div className="border-t border-gray-300 flex-grow"></div>
-              <span className="bg-transparent px-4 text-gray-600 text-sm font-medium">
-                or
-              </span>
-              <div className="border-t border-gray-300 flex-grow"></div>
-            </div>
-
-            {/* Google Sign In */}
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              className="w-full bg-white border-2 border-blue-400 hover:border-blue-500 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <FcGoogle className="w-5 h-5" />
-              <span className="text-blue-400">Sign In With Google</span>
-            </button>
-          </div>
-
-          {/* Register Link */}
-          <div className="text-center mt-6">
-            <span className="text-gray-600">Don't have an account? </span>
-            <button className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200">
-              Register
-            </button>
-          </div>
+            ))}
         </div>
       </div>
     </div>

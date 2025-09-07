@@ -1,5 +1,4 @@
-import React from "react";
-import Logo from "../assets/LogoPickora.jpg";
+import React, { useState, useEffect, useContext } from "react";
 import { HiOutlineMenuAlt1 } from "react-icons/hi";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import Avatar from "@mui/material/Avatar";
@@ -11,6 +10,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaRegUser } from "react-icons/fa6";
 import { LiaSignOutAltSolid } from "react-icons/lia";
 import Sidebar from "../Components/Sidebar";
+import { Context } from "../main";
+import axios from "axios";
+import { toast } from "react-toastify";
+import Logout from "./Logout";
+
+// Fallback logo - your original static logo
+import DefaultLogo from "../assets/LogoPickora.jpg";
 
 // Helper to get initials from a name
 const getInitials = (name = "User") => {
@@ -21,13 +27,70 @@ const getInitials = (name = "User") => {
 };
 
 const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const { user, setIsAuthenticated, setUser } = useContext(Context);
+  const [localUser, setLocalUser] = useState(null);
+  const [currentLogo, setCurrentLogo] = useState("/api/placeholder/100/50");
+  const [logoLoading, setLogoLoading] = useState(true);
+
+  useEffect(() => {
+    const data = localStorage.getItem("user-info");
+    if (data) {
+      setLocalUser(JSON.parse(data));
+    }
+  }, []);
+
+  const fetchCurrentLogo = async () => {
+    setLogoLoading(true);
+    try {
+      const response = await fetch("/api/v1/logo/all", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const logos = data.logos || [];
+
+        // Set the latest logo (first one due to sort order) as current logo
+        if (logos.length > 0) {
+          setCurrentLogo(logos[0].url);
+        } else {
+          setCurrentLogo("/api/placeholder/100/50");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching current logo:", error);
+      setCurrentLogo("/api/placeholder/100/50");
+    } finally {
+      setLogoLoading(false);
+    }
+  };
+
+  // Listen for logo updates from ManageLogo component
+  useEffect(() => {
+    const handleLogoUpdate = () => {
+      console.log("Logo update event received, fetching new logo...");
+      fetchCurrentLogo();
+    };
+
+    // Listen for custom logoUpdated event
+    window.addEventListener("logoUpdated", handleLogoUpdate);
+
+    // Initial fetch
+    fetchCurrentLogo();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("logoUpdated", handleLogoUpdate);
+    };
+  }, []);
+
   const toggleSidebar = () => {
     setSidebarOpen((prev) => !prev);
   };
-
-  // Placeholder user data (set to null to simulate logged out state)
-  const user = null;
-  // const user = null; // Uncomment this to test the Sign Up layout
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -36,24 +99,81 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
   const handleProfileClick = () => {
     navigate("/profile");
     handleMenuClose();
   };
+
+  const handleLogout = async () => {
+    try {
+      await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+        {
+          withCredentials: true,
+        }
+      );
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem("user-info");
+      localStorage.removeItem("token"); // Also clear token
+      toast.success("Logged out successfully.");
+      navigate("/");
+    } catch {
+      toast.error("Logout failed. Please try again.");
+    }
+    setShowConfirm(false);
+  };
+
   const handleLogoutClick = () => {
-    alert("Logged out"); // Replace with actual logout logic
     handleMenuClose();
+    setShowConfirm(true);
+  };
+
+  const handleLogoError = () => {
+    // If the dynamic logo fails to load, fall back to a placeholder
+    setCurrentLogo("/api/placeholder/100/50");
   };
 
   return (
     <div className="relative flex">
+      {/* Logout Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-72 text-center">
+            <p className="mb-4 text-gray-800">
+              Are you sure you want to logout?
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-1 rounded bg-gray-200 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-1 rounded bg-red-500 hover:bg-red-600 text-white"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       {sidebarOpen && (
         <div className="fixed top-0 left-0 h-screen w-64 z-40 transition-all duration-300">
-          <Sidebar setSidebarOpen={setSidebarOpen} />
+          <Sidebar
+            setSidebarOpen={setSidebarOpen}
+            currentLogo={currentLogo}
+            logoLoading={logoLoading}
+          />
         </div>
       )}
 
@@ -66,12 +186,19 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
         <div className="w-full bg-white h-[50px] flex items-center justify-between px-6 shadow-md fixed top-0 left-0 right-0 z-30">
           {/* Left group: logo + menu button */}
           <div className="flex items-center gap-8">
-            <Link to="/dashboard">
-              <img
-                src={Logo}
-                alt="Pickora Logo"
-                className="h-10 w-auto object-contain"
-              />
+            <Link to="/dashboard" className="flex items-center">
+              {logoLoading ? (
+                <div className="h-10 w-20 bg-gray-200 animate-pulse rounded flex items-center justify-center">
+                  <span className="text-xs text-gray-500">Loading...</span>
+                </div>
+              ) : (
+                <img
+                  src={currentLogo}
+                  alt="Pickora Logo"
+                  className="h-10 w-auto object-contain max-w-[120px]"
+                  onError={handleLogoError}
+                />
+              )}
             </Link>
 
             <div
@@ -123,16 +250,15 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
                   variant="contained"
                   color="primary"
                   onClick={() => navigate("/signup")}
-                  // Common styles for all devices
                   className="!capitalize !rounded-full shadow-md hover:shadow-lg transition-all duration-300 
              flex items-center justify-center"
                   sx={{
-                    minWidth: { xs: 70, sm: 100, md: 110 }, // width changes per device
-                    height: { xs: 36, sm: 40, md: 44 }, // responsive height
-                    fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.95rem" }, // responsive font size
-                    px: { xs: 1.5, sm: 2.5, md: 3.5 }, // horizontal padding per device
-                    bgcolor: "#1976d2", // override with your brand color
-                    "&:hover": { bgcolor: "#1565c0" }, // darker on hover
+                    minWidth: { xs: 70, sm: 100, md: 110 },
+                    height: { xs: 36, sm: 40, md: 44 },
+                    fontSize: { xs: "0.75rem", sm: "0.85rem", md: "0.95rem" },
+                    px: { xs: 1.5, sm: 2.5, md: 3.5 },
+                    bgcolor: "#1976d2",
+                    "&:hover": { bgcolor: "#1565c0" },
                   }}
                 >
                   Sign Up

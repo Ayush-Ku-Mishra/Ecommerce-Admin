@@ -22,37 +22,52 @@ import HomeBannerList from "./Components/HomeBannerList";
 import AddHomeBanner from "./Components/AddHomeBanner";
 import Login from "./Components/Login";
 import ProductDetails from "./Components/ProductDetails";
+import ResetPassword from "./pages/ResetPassword";
+import ProtectedRoute from "./Components/ProtectedRoute";
+import Logout from "./Components/Logout";
+import AddSizechart from "./Components/AddSizechart";
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <MainLayout />,
+    path: "/signup", // login page
+    element: <Login />,
+  },
+  {
+    element: <ProtectedRoute />, // all routes inside here require authentication
     children: [
-      { index: true, element: <Dashboard /> }, // default page when at "/"
-      { path: "dashboard", element: <Dashboard /> },
-      { path: "product-list", element: <ProductList /> },
-      { path: "product-upload", element: <ProductUpload /> },
-      { path: "add-product-size", element: <AddSize /> },
-      { path: "add-product-weight", element: <AddWeight /> },
-      { path: "manage-logo", element: <ManageLogo /> },
-      { path: "orders", element: <Orders /> },
-      { path: "home-banners-list", element: <HomeBannersList /> },
-      { path: "add-home-banner-slide", element: <AddHomeSlideModal /> },
-      { path: "category-list", element: <CategoryList /> },
-      { path: "add-category", element: <AddCategory /> },
-      { path: "sub-category-list", element: <SubCategoryList /> },
-      { path: "add-sub-category", element: <AddSubCategory /> },
-      { path: "users", element: <Users /> },
-      { path: "home-banner-list", element: <HomeBannerList /> },
-      { path: "add-home-banner", element: <AddHomeBanner /> },
-      { path: "product/4572", element: <ProductDetails/> },
+      {
+        path: "/",
+        element: <MainLayout />,
+        children: [
+          { index: true, element: <Dashboard /> }, // default/homepage
+          { path: "dashboard", element: <Dashboard /> },
+          { path: "product-list", element: <ProductList /> },
+          { path: "product-upload", element: <ProductUpload /> },
+          { path: "add-product-size", element: <AddSize /> },
+          { path: "add-product-weight", element: <AddWeight /> },
+          { path: "add-product-Sizechart", element: <AddSizechart/> },
+          { path: "manage-logo", element: <ManageLogo /> },
+          { path: "orders", element: <Orders /> },
+          { path: "home-banners-list", element: <HomeBannersList /> },
+          { path: "add-home-banner-slide", element: <AddHomeSlideModal /> },
+          { path: "category-list", element: <CategoryList /> },
+          { path: "add-category", element: <AddCategory /> },
+          { path: "sub-category-list", element: <SubCategoryList /> },
+          { path: "add-sub-category", element: <AddSubCategory /> },
+          { path: "users", element: <Users /> },
+          { path: "home-banner-list", element: <HomeBannerList /> },
+          { path: "add-home-banner", element: <AddHomeBanner /> },
+          { path: "product/:id", element: <ProductDetails /> },
+          { path: "profile", element: <ProfilePage /> },
+          { path: "logout", element: <Logout/> },
+        ],
+      },
     ],
   },
   {
-    path: "/profile",
-    element: <ProfilePage />, // Profile outside MainLayout
+    path: "password/reset/:token",
+    element: <ResetPassword />,
   },
-  { path: "signup", element: <Login /> },
 ]);
 
 function App() {

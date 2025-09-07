@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBoxes, FaClipboardList } from "react-icons/fa";
 import { MdOutlineImage, MdOutlineManageAccounts } from "react-icons/md";
 import { HiOutlineChevronDown, HiOutlineChevronRight } from "react-icons/hi";
@@ -6,8 +6,6 @@ import { CgMenuGridR } from "react-icons/cg";
 import { BsCardImage } from "react-icons/bs";
 import { TbBrandBlogger } from "react-icons/tb";
 import { PiSignOutBold } from "react-icons/pi";
-import Logo from "../assets/LogoPickora.jpg";
-import { Link } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FiUsers } from "react-icons/fi";
 import { IoCloseOutline } from "react-icons/io5";
@@ -15,7 +13,7 @@ import { IoCloseOutline } from "react-icons/io5";
 const menuConfig = [
   { label: "Dashboard", icon: <RxDashboard size={16} />, path: "/dashboard" },
   {
-    label: "Home Slides",
+    label: "Home Main Slides",
     icon: <BsCardImage size={16} />,
     path: "/home-slides",
     children: [
@@ -43,6 +41,7 @@ const menuConfig = [
       { label: "Product Upload", path: "/product-upload" },
       { label: "Add Product SIZE", path: "/add-product-size" },
       { label: "Add Product WEIGHT", path: "/add-product-weight" },
+      { label: "Add Product Sizechart", path: "/add-product-Sizechart" },
     ],
   },
   { label: "Users", icon: <FiUsers size={16} />, path: "/users" },
@@ -66,6 +65,57 @@ const menuConfig = [
 
 const Sidebar = ({ setSidebarOpen }) => {
   const [openIndex, setOpenIndex] = useState(null);
+  const [currentLogo, setCurrentLogo] = useState("/api/placeholder/100/50");
+  const [logoLoading, setLogoLoading] = useState(true);
+
+  // Fetch current logo
+  const fetchCurrentLogo = async () => {
+    setLogoLoading(true);
+    try {
+      const response = await fetch("/api/v1/logo/all", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const logos = data.logos || [];
+
+        // Set the latest logo (first one due to sort order) as current logo
+        if (logos.length > 0) {
+          setCurrentLogo(logos[0].url);
+        } else {
+          setCurrentLogo("/api/placeholder/100/50");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching current logo:", error);
+      setCurrentLogo("/api/placeholder/100/50");
+    } finally {
+      setLogoLoading(false);
+    }
+  };
+
+  // Listen for logo updates from ManageLogo component
+  useEffect(() => {
+    const handleLogoUpdate = () => {
+      console.log("Logo update event received, fetching new logo...");
+      fetchCurrentLogo();
+    };
+
+    // Listen for custom logoUpdated event
+    window.addEventListener("logoUpdated", handleLogoUpdate);
+
+    // Initial fetch
+    fetchCurrentLogo();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("logoUpdated", handleLogoUpdate);
+    };
+  }, []);
 
   const handleToggle = (idx) => {
     setOpenIndex((prevIdx) => (prevIdx === idx ? null : idx));
@@ -73,10 +123,14 @@ const Sidebar = ({ setSidebarOpen }) => {
 
   const isMobile = () => window.innerWidth < 1024;
 
-  // ⬇ This will reset submenus and close sidebar if mobile
   const handleMenuClick = () => {
     setOpenIndex(null);
     if (isMobile()) setSidebarOpen(false);
+  };
+
+  const handleLogoError = () => {
+    // If the dynamic logo fails to load, fall back to a placeholder
+    setCurrentLogo("/api/placeholder/100/50");
   };
 
   return (
@@ -84,13 +138,20 @@ const Sidebar = ({ setSidebarOpen }) => {
       {/* Logo + mobile close button */}
       <div className="flex items-center gap-2 px-7 py-1 mb-3">
         <div className="flex items-center gap-6">
-          <Link to="/">
-            <img
-              src={Logo}
-              alt="Pickora Logo"
-              className="h-10 w-auto object-contain"
-            />
-          </Link>
+          <a href="/" className="flex items-center">
+            {logoLoading ? (
+              <div className="h-10 w-20 bg-gray-200 animate-pulse rounded flex items-center justify-center">
+                <span className="text-xs text-gray-500">Loading...</span>
+              </div>
+            ) : (
+              <img
+                src={currentLogo}
+                alt="Pickora Logo"
+                className="h-10 w-auto object-contain max-w-[120px]"
+                onError={handleLogoError}
+              />
+            )}
+          </a>
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
@@ -111,14 +172,14 @@ const Sidebar = ({ setSidebarOpen }) => {
               <li key={item.label} className="mb-1">
                 {!item.children ? (
                   item.path ? (
-                    <Link
-                      to={item.path}
+                    <a
+                      href={item.path}
                       className="flex items-center gap-3 px-4 py-2 rounded text-gray-700 font-medium hover:bg-gray-100 transition"
-                      onClick={handleMenuClick} // ✅ Reset here
+                      onClick={handleMenuClick}
                     >
                       {item.icon}
                       {item.label}
-                    </Link>
+                    </a>
                   ) : (
                     <span className="flex items-center gap-3 px-4 py-2 rounded text-gray-700 font-medium">
                       {item.icon}
@@ -163,12 +224,9 @@ const Sidebar = ({ setSidebarOpen }) => {
                           style={{ display: "list-item" }}
                         >
                           {child.path ? (
-                            <Link
-                              to={child.path}
-                              onClick={handleMenuClick} // ✅ Reset here too
-                            >
+                            <a href={child.path} onClick={handleMenuClick}>
                               {child.label}
-                            </Link>
+                            </a>
                           ) : (
                             <span>{child.label}</span>
                           )}
