@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalCategories, setTotalCategories] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
 
   // Get user from global context
   const { user } = useContext(Context);
@@ -61,6 +62,18 @@ const Dashboard = () => {
           console.error("Products fetch error:", productErr);
           setTotalProducts(0);
         }
+
+        try {
+          const ordersRes = await fetch("/api/v1/payment/orders-count", {
+            credentials: "include",
+          });
+          if (!ordersRes.ok) throw new Error("Failed to fetch orders count");
+          const ordersData = await ordersRes.json();
+          setTotalOrders(ordersData.count || 0);
+        } catch (orderErr) {
+          console.error("Orders fetch error:", orderErr);
+          setTotalOrders(0);
+        }
       } catch (error) {
         console.error("General stats fetch error:", error);
       }
@@ -80,7 +93,7 @@ const Dashboard = () => {
     },
     {
       name: "Total Orders",
-      value: 636,
+      value: totalOrders,
       icon: <GoGift className="text-3xl text-white" />,
       icon2: <PiClockCountdown className="text-[33px] text-white" />,
       bg: "bg-[#2279e0]", // blue

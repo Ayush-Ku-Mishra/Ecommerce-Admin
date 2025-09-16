@@ -5,8 +5,7 @@ import Dashboard from "./Components/Dashboard";
 import MainLayout from "./Components/MainLayout";
 import ProductUpload from "./Components/ProductUpload";
 import ProductList from "./Components/ProductList";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import AddSize from "./Components/AddSize";
 import AddWeight from "./Components/AddWeight";
 import ManageLogo from "./Components/ManageLogo";
@@ -26,6 +25,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import Logout from "./Components/Logout";
 import AddSizechart from "./Components/AddSizechart";
+import logo from "./assets/PickoraFavicon.png";
 
 const router = createBrowserRouter([
   {
@@ -45,7 +45,7 @@ const router = createBrowserRouter([
           { path: "product-upload", element: <ProductUpload /> },
           { path: "add-product-size", element: <AddSize /> },
           { path: "add-product-weight", element: <AddWeight /> },
-          { path: "add-product-Sizechart", element: <AddSizechart/> },
+          { path: "add-product-Sizechart", element: <AddSizechart /> },
           { path: "manage-logo", element: <ManageLogo /> },
           { path: "orders", element: <Orders /> },
           { path: "home-banners-list", element: <HomeBannersList /> },
@@ -59,7 +59,7 @@ const router = createBrowserRouter([
           { path: "add-home-banner", element: <AddHomeBanner /> },
           { path: "product/:id", element: <ProductDetails /> },
           { path: "profile", element: <ProfilePage /> },
-          { path: "logout", element: <Logout/> },
+          { path: "logout", element: <Logout /> },
         ],
       },
     ],
@@ -73,16 +73,24 @@ const router = createBrowserRouter([
 function App() {
   return (
     <>
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss
-        theme="colored"
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 3000,
+          icon: (
+            <img
+              src={logo}
+              alt="logo"
+              style={{ width: 20, height: 20, borderRadius: "50%" }}
+            />
+          ),
+          style: {
+            borderRadius: "15px",
+            background: "#333",
+            color: "#fff",
+            marginBottom: "60px", 
+          },
+        }}
       />
       <RouterProvider router={router} />
     </>

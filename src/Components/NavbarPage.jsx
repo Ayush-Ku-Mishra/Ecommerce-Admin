@@ -17,6 +17,7 @@ import Logout from "./Logout";
 
 // Fallback logo - your original static logo
 import DefaultLogo from "../assets/LogoPickora.jpg";
+import AdminNotifications from "./AdminNotifications";
 
 // Helper to get initials from a name
 const getInitials = (name = "User") => {
@@ -28,6 +29,7 @@ const getInitials = (name = "User") => {
 
 const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Add this missing state
   const { user, setIsAuthenticated, setUser } = useContext(Context);
   const [localUser, setLocalUser] = useState(null);
   const [currentLogo, setCurrentLogo] = useState("/api/placeholder/100/50");
@@ -218,9 +220,7 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
 
           {/* Right group: notifications + avatar/sign up */}
           <div className="flex items-center gap-5 pr-2 overflow-hidden">
-            <Button className="!w-[40px] !h-[40px] !rounded-full !min-w-[40px]">
-              <IoMdNotificationsOutline className="text-[27px] text-gray-700" />
-            </Button>
+            <AdminNotifications/>
 
             {/* Conditional user display */}
             <div>

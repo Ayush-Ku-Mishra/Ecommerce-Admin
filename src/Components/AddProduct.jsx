@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { IoClose, IoStar, IoStarOutline, IoCloudUpload } from "react-icons/io5";
 import { FaRegImages } from "react-icons/fa";
-import { toast, ToastContainer } from "react-toastify";
+import  toast from "react-hot-toast";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -636,10 +636,7 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
       toast.error("Please select a product third level category.");
       return;
     }
-    if (!formData.fourthLevelCategory) {
-      toast.error("Please select a product fourth level category.");
-      return;
-    }
+    
     if (
       !formData.price ||
       isNaN(formData.price) ||
@@ -1411,18 +1408,6 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
             </div>
           </div>
         </div>
-
-        <ToastContainer
-          position="top-center"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          pauseOnHover
-          draggable
-          pauseOnFocusLoss
-          theme="colored"
-        />
       </div>
     </>
   );

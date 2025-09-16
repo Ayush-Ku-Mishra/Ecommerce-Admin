@@ -12,6 +12,10 @@ import RegisterComponent from "../pages/RegisterComponent";
 import OtpVerification from "../pages/OtpVerification";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { firebaseApp } from "../firebase";
+const auth = getAuth(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
 
 const Login = () => {
   const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context);
@@ -100,6 +104,10 @@ const Login = () => {
           }
         );
 
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+
         toast.success(response.data.message);
         setIsAuthenticated(true);
         setUser(response.data.user);
@@ -110,8 +118,141 @@ const Login = () => {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    window.location.href = `${import.meta.env.VITE_BACKEND_URL}/auth/google/callback`;
+  const handleGoogleSignIn = async () => {
+    setRegisterLoading(true);
+
+    try {
+      // Configure popup to avoid CORS issues
+      const provider = new GoogleAuthProvider();
+      provider.addScope("email");
+      provider.addScope("profile");
+
+      console.log("🚀 Starting Google Sign-In...");
+
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      console.log("Google Sign-In Result:", user);
+
+      // Prepare user data for backend
+      const userData = {
+        name: user.displayName,
+        email: user.email,
+        avatar: user.photoURL || "",
+        phone: user.phoneNumber || null,
+        role: "user",
+      };
+
+      console.log("Sending user data to backend:", userData);
+
+      // Send data to backend - always use authWithGoogle endpoint
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/authWithGoogle`,
+        userData,
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 10000, // 10 second timeout
+        }
+      );
+
+      console.log("Backend response:", response.data);
+
+      // Handle successful authentication
+      if (response.data.success) {
+        // Store token if provided
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+
+        toast.success(
+          response.data.message || "Google authentication successful!"
+        );
+
+        // Update context
+        setIsAuthenticated(true);
+        setUser(response.data.user);
+
+        // Navigate to intended page
+        navigate(redirectTo, { replace: true });
+      } else {
+        throw new Error(response.data.message || "Authentication failed");
+      }
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+
+      // Handle specific Firebase errors
+      if (error.code) {
+        const firebaseErrors = {
+          "auth/popup-closed-by-user":
+            "Sign-in was cancelled. Please try again.",
+          "auth/popup-blocked":
+            "Popup was blocked. Please allow popups for this site.",
+          "auth/network-request-failed":
+            "Network error. Please check your connection.",
+          "auth/too-many-requests":
+            "Too many attempts. Please try again later.",
+          "auth/account-exists-with-different-credential":
+            "An account already exists with this email using a different sign-in method.",
+          "auth/cancelled-popup-request":
+            "Another sign-in popup is already open.",
+        };
+
+        toast.error(
+          firebaseErrors[error.code] || `Firebase error: ${error.message}`
+        );
+      }
+      // Handle backend/network errors
+      else if (error.response) {
+        if (error.response.status === 500) {
+          toast.error("Server error. Please try again in a moment.");
+          console.error("Server Error Details:", error.response.data);
+        } else if (error.response.status === 400) {
+          toast.error(
+            error.response.data.message || "Invalid request. Please try again."
+          );
+        } else if (error.response.status === 404) {
+          toast.error("Service not found. Please contact support.");
+        } else {
+          toast.error(error.response.data.message || "Authentication failed.");
+        }
+      }
+      // Handle network/timeout errors
+      else if (error.code === "ECONNABORTED") {
+        toast.error(
+          "Request timed out. Please check your connection and try again."
+        );
+      } else if (error.message === "Network Error") {
+        toast.error("Network error. Please check your connection.");
+      }
+      // Generic error
+      else {
+        toast.error("Google authentication failed. Please try again.");
+        console.error("Unexpected error:", error);
+      }
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
+
+  // Optional: Add a retry mechanism
+  const handleGoogleSignInWithRetry = async (retryCount = 0) => {
+    const maxRetries = 2;
+
+    try {
+      await handleGoogleSignIn();
+    } catch (error) {
+      if (retryCount < maxRetries && error.response?.status >= 500) {
+        console.log(
+          `Retrying Google auth (attempt ${retryCount + 1}/${maxRetries + 1})`
+        );
+        setTimeout(() => handleGoogleSignInWithRetry(retryCount + 1), 2000);
+      } else {
+        throw error;
+      }
+    }
   };
 
   const toggleLoginRegister = () => {
