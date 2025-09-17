@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Context } from "../main";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import Logo from "../assets/PickoraLogo1.png";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
