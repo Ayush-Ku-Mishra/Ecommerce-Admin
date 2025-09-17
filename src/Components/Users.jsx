@@ -189,6 +189,8 @@ const Users = () => {
         },
       });
 
+      const resData = await response.json();
+
       if (response.ok) {
         setUsers((prev) => prev.filter((user) => user._id !== userId));
         setFilteredUsers((prev) => prev.filter((user) => user._id !== userId));
@@ -201,9 +203,12 @@ const Users = () => {
           userName: "",
           selectedCount: 0,
         });
+        toast.success(resData.message || "User deleted successfully");
       } else {
-        console.error("Failed to delete user");
-        toast.error("Failed to delete user. Please try again.");
+        console.error("Failed to delete user", resData.message);
+        toast.error(
+          resData.message || "Failed to delete user. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error deleting user:", error);
