@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrashAlt, FaPlus, FaSpinner, FaTimes, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrashAlt,
+  FaPlus,
+  FaSpinner,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import { IoImageOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import toast from "react-hot-toast";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import AddCategory from "./AddCategory"; // Assume proper relative path
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Zoom } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/zoom';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Zoom } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/zoom";
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
@@ -19,18 +27,19 @@ const CategoryList = () => {
   const [deleting, setDeleting] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  
+
   // Image modal states - updated for Swiper
-  const [imageModal, setImageModal] = useState({ 
-    open: false, 
-    images: [], 
+  const [imageModal, setImageModal] = useState({
+    open: false,
+    images: [],
     currentIndex: 0,
-    categoryName: '' 
+    categoryName: "",
   });
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Backend URL:", import.meta.env.VITE_BACKEND_URL);
     fetchCategories();
   }, []);
 
@@ -43,7 +52,9 @@ const CategoryList = () => {
       );
       if (response.data.success) {
         // Filter only main categories (no parentId)
-        const mainCategories = response.data.data.filter(category => !category.parentId);
+        const mainCategories = response.data.data.filter(
+          (category) => !category.parentId
+        );
         setCategories(mainCategories);
       } else {
         toast.error(response.data.message || "Failed to fetch categories");
@@ -102,9 +113,7 @@ const CategoryList = () => {
         { withCredentials: true }
       );
       if (response.data.success) {
-        setCategories((prev) =>
-          prev.filter((cat) => cat._id !== categoryId)
-        );
+        setCategories((prev) => prev.filter((cat) => cat._id !== categoryId));
         toast.success("Category deleted successfully!");
       } else {
         toast.error(response.data.message || "Failed to delete category");
@@ -126,32 +135,32 @@ const CategoryList = () => {
 
   // Updated image modal functions for Swiper
   const handleImageClick = (category, imageIndex = 0) => {
-    console.log('Image clicked:', category, imageIndex); // Debug log
-    console.log('Category images:', category.images); // Debug log
+    console.log("Image clicked:", category, imageIndex); // Debug log
+    console.log("Category images:", category.images); // Debug log
     if (category.images && category.images.length > 0) {
       setImageModal({
         open: true,
         images: category.images,
         currentIndex: imageIndex,
-        categoryName: category.name
+        categoryName: category.name,
       });
-      console.log('Modal state set:', { 
-        open: true, 
-        images: category.images, 
+      console.log("Modal state set:", {
+        open: true,
+        images: category.images,
         currentIndex: imageIndex,
-        categoryName: category.name 
+        categoryName: category.name,
       }); // Debug log
     } else {
-      console.log('No images found for category:', category.name);
+      console.log("No images found for category:", category.name);
     }
   };
 
   const closeImageModal = () => {
-    setImageModal({ 
-      open: false, 
-      images: [], 
+    setImageModal({
+      open: false,
+      images: [],
       currentIndex: 0,
-      categoryName: '' 
+      categoryName: "",
     });
   };
 
@@ -244,12 +253,12 @@ const CategoryList = () => {
                     {/* Image Column */}
                     <div className="col-span-2 flex items-center justify-center md:justify-start">
                       <div className="relative group">
-                        <div 
+                        <div
                           className="w-16 h-16 rounded-xl overflow-hidden border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow mx-auto md:mx-0 cursor-pointer hover:border-blue-300"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('Image container clicked!', category);
+                            console.log("Image container clicked!", category);
                             handleImageClick(category, 0);
                           }}
                           style={{ zIndex: 10 }}
@@ -259,7 +268,7 @@ const CategoryList = () => {
                               src={category.images[0]}
                               alt={category.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none"
-                              style={{ pointerEvents: 'none' }}
+                              style={{ pointerEvents: "none" }}
                             />
                           ) : (
                             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center pointer-events-none">
@@ -268,17 +277,17 @@ const CategoryList = () => {
                           )}
                         </div>
                         {category.images && category.images.length > 1 && (
-                          <div 
+                          <div
                             className="absolute -bottom-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold shadow-lg pointer-events-none"
-                            style={{ pointerEvents: 'none' }}
+                            style={{ pointerEvents: "none" }}
                           >
                             +{category.images.length - 1}
                           </div>
                         )}
                         {/* Hover overlay for clickable indication */}
-                        <div 
+                        <div
                           className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none"
-                          style={{ pointerEvents: 'none' }}
+                          style={{ pointerEvents: "none" }}
                         >
                           <span className="text-white text-xs font-medium bg-black bg-opacity-50 px-2 py-1 rounded">
                             Click to view
@@ -418,19 +427,19 @@ const CategoryList = () => {
 
         {/* Image Gallery Modal using Dialog - Same as ProductsSection */}
         {imageModal.open && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
             style={{ zIndex: 9999 }}
           >
-            <div 
+            <div
               className="relative bg-black rounded-lg overflow-hidden"
               style={{
-                backgroundColor: 'transparent',
-                boxShadow: 'none',
-                maxWidth: '95vw',
-                maxHeight: '95vh',
-                width: '100%',
-                height: '100%'
+                backgroundColor: "transparent",
+                boxShadow: "none",
+                maxWidth: "95vw",
+                maxHeight: "95vh",
+                width: "100%",
+                height: "100%",
               }}
             >
               <button
@@ -439,15 +448,15 @@ const CategoryList = () => {
               >
                 <FaTimes size={20} />
               </button>
-              
+
               {imageModal.images.length > 0 && (
                 <Swiper
                   modules={[Navigation, Pagination, Zoom]}
                   spaceBetween={0}
                   slidesPerView={1}
                   navigation={{
-                    prevEl: '.swiper-button-prev-custom-category',
-                    nextEl: '.swiper-button-next-custom-category',
+                    prevEl: ".swiper-button-prev-custom-category",
+                    nextEl: ".swiper-button-next-custom-category",
                   }}
                   pagination={{
                     clickable: true,
@@ -465,13 +474,15 @@ const CategoryList = () => {
                       <div className="swiper-zoom-container flex items-center justify-center h-full">
                         <img
                           src={image}
-                          alt={`${imageModal.categoryName} - Image ${index + 1}`}
+                          alt={`${imageModal.categoryName} - Image ${
+                            index + 1
+                          }`}
                           className="max-w-full max-h-full object-contain"
                         />
                       </div>
                     </SwiperSlide>
                   ))}
-                  
+
                   {/* Custom Navigation Buttons */}
                   {imageModal.images.length > 1 && (
                     <>
