@@ -102,7 +102,7 @@ const Login = () => {
     if (currentView === "login") {
       try {
         const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/login`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/admin/login`,
           { email: data.email, password: data.password },
           {
             withCredentials: true,
