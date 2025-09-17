@@ -185,7 +185,7 @@ const AdminNotifications = () => {
           {unreadCount > 0 && (
             <span
               className="absolute bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 animate-pulse"
-              style={{ top: "-6px", right: "-6px" }}
+              style={{ top: "4px", right: "4px" }}
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
@@ -195,7 +195,7 @@ const AdminNotifications = () => {
           {unreadCount > 0 && (
             <span
               className="absolute bg-red-500 rounded-full w-[18px] h-[18px] animate-ping"
-              style={{ top: "-6px", right: "-6px" }}
+              style={{ top: "4px", right: "4px" }}
             ></span>
           )}
         </button>
