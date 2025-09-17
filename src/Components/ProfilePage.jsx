@@ -18,7 +18,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Context } from "../main";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { PhoneInput } from "react-international-phone";
@@ -244,9 +244,9 @@ const ProfilePage = () => {
     }
   };
 
-  const handleChangePassword = async (data) => {
+  const handleSetPassword = async (data) => {
     if (data.newPassword !== data.confirmPassword) {
-      toast.error("New passwords do not match!");
+      toast.error("Passwords do not match!");
       return;
     }
 
@@ -254,9 +254,8 @@ const ProfilePage = () => {
 
     try {
       const { data: resData } = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/change-password`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/set-password`,
         {
-          currentPassword: data.currentPassword,
           newPassword: data.newPassword,
           confirmPassword: data.confirmPassword,
         },
@@ -266,23 +265,22 @@ const ProfilePage = () => {
       );
 
       if (resData.success) {
-        toast.success("Password changed successfully!");
+        toast.success("Password set successfully!");
         reset();
         setShowPasswords({
-          currentPassword: false,
           newPassword: false,
           confirmPassword: false,
         });
         setPasswordDialogOpen(false);
       } else {
-        toast.error(resData.message || "Failed to change password");
+        toast.error(resData.message || "Failed to set password");
       }
     } catch (error) {
-      console.error("Password change error:", error);
+      console.error("Password set error:", error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error("Failed to change password. Please try again.");
+        toast.error("Failed to set password. Please try again.");
       }
     } finally {
       setPasswordLoading(false);
