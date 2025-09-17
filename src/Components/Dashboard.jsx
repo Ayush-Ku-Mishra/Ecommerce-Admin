@@ -27,7 +27,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       const API_BASE_URL =
-        import.meta.env.VITE_BACKEND_URL ||
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1` ||
         "https://myecommerce-backend-p8ca.onrender.com/api/v1";
 
       try {

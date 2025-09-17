@@ -45,12 +45,15 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
   const fetchCurrentLogo = async () => {
     setLogoLoading(true);
     try {
-      const response = await fetch("/api/v1/logo/all", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/all`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -60,12 +63,16 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
         if (logos.length > 0) {
           setCurrentLogo(logos[0].url);
         } else {
-          setCurrentLogo("/api/placeholder/100/50");
+          setCurrentLogo(
+            `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
+          );
         }
       }
     } catch (error) {
       console.error("Error fetching current logo:", error);
-      setCurrentLogo("/api/placeholder/100/50");
+      setCurrentLogo(
+        `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
+      );
     } finally {
       setLogoLoading(false);
     }
@@ -220,7 +227,7 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
 
           {/* Right group: notifications + avatar/sign up */}
           <div className="flex items-center gap-5 pr-2 overflow-hidden">
-            <AdminNotifications/>
+            <AdminNotifications />
 
             {/* Conditional user display */}
             <div>
