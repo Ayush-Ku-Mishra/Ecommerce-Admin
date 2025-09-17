@@ -10,8 +10,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import { IoImageOutline } from "react-icons/io5";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast from "react-hot-toast";
 import axios from "axios";
 import AddSubCategory from "./AddSubCategory";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -500,18 +499,6 @@ const SubCategoryList = () => {
       {showAddSubCategory && (
         <AddSubCategory onClose={handleAddSubCategoryClose} />
       )}
-
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss
-        theme="colored"
-      />
     </div>
   );
 };

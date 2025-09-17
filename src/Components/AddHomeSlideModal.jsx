@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { IoClose, IoCloudUpload } from "react-icons/io5";
 import { FaRegImages } from "react-icons/fa";
-import { toast, ToastContainer } from "react-toastify";
+import toast from "react-hot-toast";
 import { useNavigate, useLocation } from "react-router-dom";
-import "react-toastify/dist/ReactToastify.css";
 
 const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
   const [images, setImages] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Check if this is being used as a route (from sidebar) or as a modal (from button)
   const isRoute = !isOpen && !onClose; // If no props passed, it's being used as a route
   const shouldShow = isRoute || isOpen; // Show if it's a route OR if isOpen is true
@@ -62,14 +61,25 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
     if (files.length === 0) return;
 
     // Validate file types
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    const validFiles = Array.from(files).filter(file => {
+    const validTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    const validFiles = Array.from(files).filter((file) => {
       if (!validTypes.includes(file.type)) {
-        toast.error(`Invalid file type: ${file.name}. Please upload images only.`);
+        toast.error(
+          `Invalid file type: ${file.name}. Please upload images only.`
+        );
         return false;
       }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error(`File too large: ${file.name}. Please upload files under 5MB.`);
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
+        toast.error(
+          `File too large: ${file.name}. Please upload files under 5MB.`
+        );
         return false;
       }
       return true;
@@ -85,8 +95,12 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
 
     setImages((prev) => [...prev, ...newImages]);
     event.target.value = "";
-    
-    toast.success(`${validFiles.length} image${validFiles.length > 1 ? 's' : ''} added successfully!`);
+
+    toast.success(
+      `${validFiles.length} image${
+        validFiles.length > 1 ? "s" : ""
+      } added successfully!`
+    );
   };
 
   const handleRemoveImage = (id) => {
@@ -104,14 +118,14 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     // Clean up any blob URLs when closing
-    images.forEach(image => {
+    images.forEach((image) => {
       if (image.url) {
         URL.revokeObjectURL(image.url);
       }
     });
-    
+
     if (isRoute) {
       navigate(-1);
     } else {
@@ -132,17 +146,23 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
     <>
       {/* Backdrop - only show for modal usage, not for route usage */}
       {!isRoute && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 overflow-hidden"
           onClick={handleBackdropClick}
         />
       )}
-      
+
       {/* Modal/Page Content */}
-      <div className={`${isRoute ? 'min-h-screen bg-gray-50' : 'fixed inset-0 z-50'} flex flex-col bg-white`}>
+      <div
+        className={`${
+          isRoute ? "min-h-screen bg-gray-50" : "fixed inset-0 z-50"
+        } flex flex-col bg-white`}
+      >
         {/* Header */}
         <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-gray-200 shadow-sm">
-          <h1 className="text-xl font-semibold text-gray-900">Add Home Slide</h1>
+          <h1 className="text-xl font-semibold text-gray-900">
+            Add Home Slide
+          </h1>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -158,9 +178,12 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
           <div className="max-w-4xl mx-auto p-8">
             {/* Instructions */}
             <div className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-lg font-medium text-blue-900 mb-2">Add Home Banner Slide</h3>
+              <h3 className="text-lg font-medium text-blue-900 mb-2">
+                Add Home Banner Slide
+              </h3>
               <p className="text-blue-700 text-sm mb-2">
-                Upload images for your home page banner slider. You can upload multiple images that will be displayed as a slideshow.
+                Upload images for your home page banner slider. You can upload
+                multiple images that will be displayed as a slideshow.
               </p>
               <ul className="text-blue-600 text-xs space-y-1">
                 <li>• Supported formats: JPG, PNG, GIF, WebP</li>
@@ -174,7 +197,7 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
               <h4 className="text-lg font-medium text-gray-900 mb-4">
                 Upload Images ({images.length} selected)
               </h4>
-              
+
               <div className="flex flex-wrap gap-4">
                 {images.map((image) => (
                   <div
@@ -218,7 +241,8 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
               {images.length > 0 && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-green-700 text-sm">
-                    ✓ {images.length} image{images.length > 1 ? 's' : ''} ready to publish
+                    ✓ {images.length} image{images.length > 1 ? "s" : ""} ready
+                    to publish
                   </p>
                 </div>
               )}
@@ -230,9 +254,9 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
                 onClick={handleSubmitFinal}
                 disabled={images.length === 0}
                 className={`${
-                  images.length === 0 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg'
+                  images.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
                 } text-white font-semibold py-3 px-8 rounded-lg transition-all flex items-center justify-center gap-3 shadow-md transform hover:scale-105 disabled:hover:scale-100 disabled:hover:shadow-md`}
                 type="button"
               >
@@ -243,19 +267,6 @@ const AddHomeSlideModal = ({ isOpen, onClose, onAddBanners }) => {
           </div>
         </div>
       </div>
-
-      {/* Toast Container */}
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss
-        theme="colored"
-      />
     </>
   );
 };

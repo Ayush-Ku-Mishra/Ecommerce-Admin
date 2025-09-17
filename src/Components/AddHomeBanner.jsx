@@ -2,8 +2,7 @@ import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoClose, IoCloudUpload, IoChevronDown } from "react-icons/io5";
 import { MdOutlineImage } from "react-icons/md";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import  toast from "react-hot-toast";
 
 const AddHomeBanner = () => {
   const inputRef = useRef();
@@ -289,17 +288,6 @@ const AddHomeBanner = () => {
           </button>
         </div>
       </div>
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss
-        theme="colored"
-      />
     </div>
   );
 };

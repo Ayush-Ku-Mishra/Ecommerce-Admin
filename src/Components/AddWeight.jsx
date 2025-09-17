@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { IoCloudUpload } from "react-icons/io5";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast from "react-hot-toast";
 
 const AddWeight = () => {
   const [weightInput, setWeightInput] = useState("");
@@ -51,7 +50,9 @@ const AddWeight = () => {
 
   return (
     <div className="lg:w-[50%] pl-4 pr-2 py-5 min-w-0">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">Add Product Weight</h2>
+      <h2 className="text-xl font-bold mb-4 text-gray-800">
+        Add Product Weight
+      </h2>
 
       {/* Entry section */}
       <div className="bg-green-50 border border-green-200 rounded-lg p-5 shadow-sm mb-6">
@@ -96,18 +97,6 @@ const AddWeight = () => {
           </div>
         )}
       </div>
-
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss
-        theme="colored"
-      />
     </div>
   );
 };

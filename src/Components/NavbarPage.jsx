@@ -12,7 +12,7 @@ import { LiaSignOutAltSolid } from "react-icons/lia";
 import Sidebar from "../Components/Sidebar";
 import { Context } from "../main";
 import axios from "axios";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import Logout from "./Logout";
 
 // Fallback logo - your original static logo
@@ -55,24 +55,23 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/all`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        const logos = data.logos || [];
+      if (!response.ok) {
+        throw new Error(`Failed to fetch logos: ${response.statusText}`);
+      }
 
-        // Set the latest logo (first one due to sort order) as current logo
-        if (logos.length > 0) {
-          setCurrentLogo(logos[0].url);
-        } else {
-          setCurrentLogo(
-            `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
-          );
-        }
+      const data = await response.json();
+      const logos = data.logos || [];
+
+      if (logos.length > 0) {
+        setCurrentLogo(logos[0].url);
+      } else {
+        setCurrentLogo(
+          `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
+        );
       }
     } catch (error) {
       console.error("Error fetching current logo:", error);

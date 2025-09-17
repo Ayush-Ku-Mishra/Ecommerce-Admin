@@ -10,7 +10,7 @@ import {
   IoTrashOutline,
 } from "react-icons/io5";
 import { Backdrop, CircularProgress } from "@mui/material";
-import { toast, ToastContainer } from "react-toastify";
+import toast from "react-hot-toast";
 
 const AddSizechart = () => {
   const [formData, setFormData] = useState({
@@ -180,41 +180,41 @@ const AddSizechart = () => {
   // Handle image upload
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    
+
     for (const file of files) {
       const imageId = Date.now() + Math.random();
-      
-      setImageLoading(prev => ({ ...prev, [imageId]: true }));
-      
+
+      setImageLoading((prev) => ({ ...prev, [imageId]: true }));
+
       const tempImage = {
         id: imageId,
         url: URL.createObjectURL(file),
         name: file.name,
         uploading: true,
       };
-      
-      setUploadedImages(prev => [...prev, tempImage]);
-      
+
+      setUploadedImages((prev) => [...prev, tempImage]);
+
       try {
         const formDataImage = new FormData();
         formDataImage.append("images", file);
-        
+
         const res = await fetch("/api/v1/sizecharts/upload-images", {
           method: "POST",
           body: formDataImage,
         });
-        
+
         const data = await res.json();
-        
+
         if (res.ok && data.success && data.images.length > 0) {
-          setUploadedImages(prev => 
-            prev.map(img => 
-              img.id === imageId 
-                ? { 
-                    id: imageId, 
-                    url: data.images[0], 
-                    name: file.name, 
-                    uploading: false 
+          setUploadedImages((prev) =>
+            prev.map((img) =>
+              img.id === imageId
+                ? {
+                    id: imageId,
+                    url: data.images[0],
+                    name: file.name,
+                    uploading: false,
                   }
                 : img
             )
@@ -226,44 +226,53 @@ const AddSizechart = () => {
       } catch (error) {
         console.error(error);
         toast.error("Image upload error: " + error.message);
-        
-        setUploadedImages(prev => prev.filter(img => img.id !== imageId));
+
+        setUploadedImages((prev) => prev.filter((img) => img.id !== imageId));
         URL.revokeObjectURL(tempImage.url);
       } finally {
-        setImageLoading(prev => {
+        setImageLoading((prev) => {
           const newState = { ...prev };
           delete newState[imageId];
           return newState;
         });
       }
     }
-    
+
     e.target.value = "";
   };
 
   // Remove image - fixed to handle 404 errors properly
   const removeImage = async (imageId, imageUrl) => {
-    setImageLoading(prev => ({ ...prev, [imageId]: true }));
-    
+    setImageLoading((prev) => ({ ...prev, [imageId]: true }));
+
     try {
       // Only try to delete from Cloudinary if it's not a local blob URL
-      if (imageUrl && !imageUrl.startsWith('blob:')) {
+      if (imageUrl && !imageUrl.startsWith("blob:")) {
         try {
-          const res = await fetch(`/api/v1/sizecharts/remove-image?img=${encodeURIComponent(imageUrl)}`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-          });
-          
+          const res = await fetch(
+            `/api/v1/sizecharts/remove-image?img=${encodeURIComponent(
+              imageUrl
+            )}`,
+            {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
           // If we get a 404, the image might already be deleted from Cloudinary
           // We'll still remove it from our local state
           if (res.status === 404) {
-            console.warn("Image not found in Cloudinary, removing from local state");
+            console.warn(
+              "Image not found in Cloudinary, removing from local state"
+            );
           } else if (!res.ok) {
             // For other errors, try to get the error message
             const contentType = res.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
               const errorData = await res.json();
-              throw new Error(errorData.message || `Server error: ${res.status}`);
+              throw new Error(
+                errorData.message || `Server error: ${res.status}`
+              );
             } else {
               throw new Error(`Server error: ${res.status}`);
             }
@@ -276,30 +285,34 @@ const AddSizechart = () => {
           }
         } catch (fetchError) {
           // If it's a network error or the image doesn't exist, we'll still remove it locally
-          if (fetchError.message.includes('404') || fetchError.message.includes('not found')) {
-            console.warn("Image not found in Cloudinary, removing from local state");
+          if (
+            fetchError.message.includes("404") ||
+            fetchError.message.includes("not found")
+          ) {
+            console.warn(
+              "Image not found in Cloudinary, removing from local state"
+            );
           } else {
             throw fetchError;
           }
         }
       }
-      
+
       // Remove from local state regardless of Cloudinary result
-      setUploadedImages(prev => {
-        const imageToRemove = prev.find(img => img.id === imageId);
-        if (imageToRemove && imageToRemove.url.startsWith('blob:')) {
+      setUploadedImages((prev) => {
+        const imageToRemove = prev.find((img) => img.id === imageId);
+        if (imageToRemove && imageToRemove.url.startsWith("blob:")) {
           URL.revokeObjectURL(imageToRemove.url);
         }
-        return prev.filter(img => img.id !== imageId);
+        return prev.filter((img) => img.id !== imageId);
       });
-      
+
       toast.success("Image removed successfully");
-      
     } catch (error) {
       console.error(error);
       toast.error("Error removing image: " + error.message);
     } finally {
-      setImageLoading(prev => {
+      setImageLoading((prev) => {
         const newState = { ...prev };
         delete newState[imageId];
         return newState;
@@ -364,7 +377,7 @@ const AddSizechart = () => {
       return;
     }
 
-    const hasUploadingImages = uploadedImages.some(img => img.uploading);
+    const hasUploadingImages = uploadedImages.some((img) => img.uploading);
     if (hasUploadingImages) {
       toast.info("Please wait for all images to finish uploading");
       return;
@@ -372,8 +385,8 @@ const AddSizechart = () => {
 
     try {
       setPublishLoading(true);
-      
-      const uploadedImageUrls = uploadedImages.map(img => img.url);
+
+      const uploadedImageUrls = uploadedImages.map((img) => img.url);
 
       const payload = {
         ...formData,
@@ -401,16 +414,23 @@ const AddSizechart = () => {
       if (editingChart) {
         setSavedCharts((prev) =>
           prev.map((chart) => {
-            if ((chart.id || chart._id) === (editingChart.id || editingChart._id)) {
+            if (
+              (chart.id || chart._id) === (editingChart.id || editingChart._id)
+            ) {
               return {
                 ...result.sizeChart,
-                createdAt: new Date(result.sizeChart.createdAt).toLocaleDateString(),
-                updatedAt: new Date(result.sizeChart.updatedAt).toLocaleDateString(),
-                howToMeasureImages: result.sizeChart.howToMeasureImageUrls?.map((url, idx) => ({
-                  id: `updated_${idx}_${Date.now()}`,
-                  url: url,
-                  name: `Image ${idx + 1}`,
-                })) || []
+                createdAt: new Date(
+                  result.sizeChart.createdAt
+                ).toLocaleDateString(),
+                updatedAt: new Date(
+                  result.sizeChart.updatedAt
+                ).toLocaleDateString(),
+                howToMeasureImages:
+                  result.sizeChart.howToMeasureImageUrls?.map((url, idx) => ({
+                    id: `updated_${idx}_${Date.now()}`,
+                    url: url,
+                    name: `Image ${idx + 1}`,
+                  })) || [],
               };
             }
             return chart;
@@ -422,13 +442,14 @@ const AddSizechart = () => {
           ...result.sizeChart,
           createdAt: new Date(result.sizeChart.createdAt).toLocaleDateString(),
           updatedAt: new Date(result.sizeChart.updatedAt).toLocaleDateString(),
-          howToMeasureImages: result.sizeChart.howToMeasureImageUrls?.map((url, idx) => ({
-            id: `new_${idx}_${Date.now()}`,
-            url: url,
-            name: `Image ${idx + 1}`,
-          })) || []
+          howToMeasureImages:
+            result.sizeChart.howToMeasureImageUrls?.map((url, idx) => ({
+              id: `new_${idx}_${Date.now()}`,
+              url: url,
+              name: `Image ${idx + 1}`,
+            })) || [],
         };
-        
+
         setSavedCharts((prev) => [formattedNewChart, ...prev]);
       }
 
@@ -485,8 +506,12 @@ const AddSizechart = () => {
         ],
       });
       setUploadedImages([]);
-      
-      toast.success(editingChart ? "Size chart updated successfully" : "Size chart created successfully");
+
+      toast.success(
+        editingChart
+          ? "Size chart updated successfully"
+          : "Size chart created successfully"
+      );
     } catch (error) {
       console.error(error);
       toast.error(error.message || "Error saving size chart");
@@ -500,7 +525,7 @@ const AddSizechart = () => {
       name: chart.name || "",
       unit: chart.unit || "inch",
       howToMeasureDescription: chart.howToMeasureDescription || "",
-      sizes: (chart.sizes || []).map(size => ({
+      sizes: (chart.sizes || []).map((size) => ({
         sizeLabel: size.sizeLabel || "",
         shoulder: size.shoulder || "",
         length: size.length || "",
@@ -512,18 +537,18 @@ const AddSizechart = () => {
         thigh: size.thigh || "",
       })),
     });
-    
+
     const existingImages = (chart.howToMeasureImages || []).map((img, idx) => ({
-      id: `existing_${idx}_${chart.id || chart._id}_${Date.now()}`, 
+      id: `existing_${idx}_${chart.id || chart._id}_${Date.now()}`,
       url: img.url,
       name: img.name || `Image ${idx + 1}`,
       uploading: false,
     }));
-    
+
     setUploadedImages(existingImages);
     setEditingChart({
       ...chart,
-      id: chart.id || chart._id
+      id: chart.id || chart._id,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -531,13 +556,13 @@ const AddSizechart = () => {
   const handleDelete = async (chartId) => {
     if (window.confirm("Are you sure you want to delete this size chart?")) {
       try {
-        setDeleteLoading(prev => ({ ...prev, [chartId]: true }));
-        
+        setDeleteLoading((prev) => ({ ...prev, [chartId]: true }));
+
         const res = await fetch(`/api/v1/sizecharts/delete/${chartId}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
         });
-        
+
         if (!res.ok) {
           const contentType = res.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
@@ -547,18 +572,20 @@ const AddSizechart = () => {
             throw new Error(`Server error: ${res.status}`);
           }
         }
-        
-        setSavedCharts((prev) => prev.filter((chart) => (chart.id || chart._id) !== chartId));
+
+        setSavedCharts((prev) =>
+          prev.filter((chart) => (chart.id || chart._id) !== chartId)
+        );
         if (editingChart && (editingChart.id || editingChart._id) === chartId) {
           cancelEdit();
         }
-        
+
         toast.success("Size chart deleted successfully");
       } catch (err) {
         console.error(err);
         toast.error("Error deleting size chart: " + err.message);
       } finally {
-        setDeleteLoading(prev => {
+        setDeleteLoading((prev) => {
           const newState = { ...prev };
           delete newState[chartId];
           return newState;
@@ -643,7 +670,7 @@ const AddSizechart = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <CircularProgress size={60} sx={{ color: '#3B82F6' }} />
+          <CircularProgress size={60} sx={{ color: "#3B82F6" }} />
           <p className="mt-6 text-xl font-medium text-gray-600">
             Loading size charts...
           </p>
@@ -746,14 +773,14 @@ const AddSizechart = () => {
                         alt={image.name || "Upload image"}
                         className="w-full h-24 object-cover rounded-lg border border-gray-200"
                       />
-                      
+
                       {/* Loading overlay for individual image */}
                       {(image.uploading || imageLoading[image.id]) && (
                         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                          <CircularProgress size={20} sx={{ color: 'white' }} />
+                          <CircularProgress size={20} sx={{ color: "white" }} />
                         </div>
                       )}
-                      
+
                       {/* Remove button */}
                       {!image.uploading && !imageLoading[image.id] && (
                         <button
@@ -765,9 +792,11 @@ const AddSizechart = () => {
                           ×
                         </button>
                       )}
-                      
+
                       <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b-lg truncate">
-                        {image.uploading ? "Uploading..." : (image.name || "Image")}
+                        {image.uploading
+                          ? "Uploading..."
+                          : image.name || "Image"}
                       </div>
                     </div>
                   ))}
@@ -980,7 +1009,11 @@ const AddSizechart = () => {
             className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <IoSave size={16} />
-            {publishLoading ? "Saving..." : editingChart ? "Update Size Chart" : "Publish Size Chart"}
+            {publishLoading
+              ? "Saving..."
+              : editingChart
+              ? "Update Size Chart"
+              : "Publish Size Chart"}
           </button>
         </div>
       </div>
@@ -997,11 +1030,16 @@ const AddSizechart = () => {
             <div className="min-w-full space-y-4">
               {savedCharts.map((chart) => {
                 const isExpanded = expandedCharts[chart.id || chart._id];
-                const viewUnit = chartViewUnit[chart.id || chart._id] || chart.unit;
+                const viewUnit =
+                  chartViewUnit[chart.id || chart._id] || chart.unit;
                 const displaySizes =
                   viewUnit === chart.unit
                     ? chart.sizes || []
-                    : getConvertedSizes(chart.sizes || [], chart.unit, viewUnit);
+                    : getConvertedSizes(
+                        chart.sizes || [],
+                        chart.unit,
+                        viewUnit
+                      );
                 const filledFields = getFilledFields(chart.sizes || []);
 
                 const measureImages = chart.howToMeasureImages || [];
@@ -1025,17 +1063,21 @@ const AddSizechart = () => {
                             </span>
                           )}
                         </span>
-                        {editingChart && (editingChart.id === chart.id || editingChart.id === chart._id) && (
-                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                            Editing
-                          </span>
-                        )}
+                        {editingChart &&
+                          (editingChart.id === chart.id ||
+                            editingChart.id === chart._id) && (
+                            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                              Editing
+                            </span>
+                          )}
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {isExpanded && (
                           <button
-                            onClick={() => toggleChartUnit(chart.id || chart._id, viewUnit)}
+                            onClick={() =>
+                              toggleChartUnit(chart.id || chart._id, viewUnit)
+                            }
                             className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
                           >
                             Switch to {viewUnit === "inch" ? "cm" : "inch"}
@@ -1057,7 +1099,10 @@ const AddSizechart = () => {
                           disabled={deleteLoading[chart.id || chart._id]}
                         >
                           {deleteLoading[chart.id || chart._id] ? (
-                            <CircularProgress size={18} sx={{ color: 'currentColor' }} />
+                            <CircularProgress
+                              size={18}
+                              sx={{ color: "currentColor" }}
+                            />
                           ) : (
                             <IoTrashOutline size={18} />
                           )}
@@ -1080,7 +1125,8 @@ const AddSizechart = () => {
                     {isExpanded && (
                       <div className="p-4">
                         {/* How to Measure Info */}
-                        {(measureImages.length > 0 || chart.howToMeasureDescription) && (
+                        {(measureImages.length > 0 ||
+                          chart.howToMeasureDescription) && (
                           <div className="mb-4 p-4 bg-blue-50 rounded-lg">
                             <h4 className="font-medium text-gray-800 mb-3">
                               How to Measure
@@ -1090,10 +1136,18 @@ const AddSizechart = () => {
                             {measureImages.length > 0 && (
                               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
                                 {measureImages.map((image, idx) => (
-                                  <div key={`chart_${chart.id || chart._id}_img_${idx}`} className="relative">
+                                  <div
+                                    key={`chart_${
+                                      chart.id || chart._id
+                                    }_img_${idx}`}
+                                    className="relative"
+                                  >
                                     <img
                                       src={image.url}
-                                      alt={image.name || `Measurement guide ${idx + 1}`}
+                                      alt={
+                                        image.name ||
+                                        `Measurement guide ${idx + 1}`
+                                      }
                                       className="w-full h-24 object-cover rounded border"
                                     />
                                     <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 rounded-b truncate">
@@ -1133,7 +1187,12 @@ const AddSizechart = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                               {displaySizes.map((size, index) => (
-                                <tr key={`size_row_${chart.id || chart._id}_${index}`} className="hover:bg-gray-50">
+                                <tr
+                                  key={`size_row_${
+                                    chart.id || chart._id
+                                  }_${index}`}
+                                  className="hover:bg-gray-50"
+                                >
                                   <td className="px-3 py-2 text-sm font-medium text-gray-900 sticky left-0 bg-white">
                                     {size.sizeLabel || "-"}
                                   </td>
@@ -1171,32 +1230,22 @@ const AddSizechart = () => {
 
       {/* Backdrop for save/update operations */}
       <Backdrop
-        sx={{ 
-          color: '#fff', 
+        sx={{
+          color: "#fff",
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backdropFilter: 'blur(4px)'
+          backdropFilter: "blur(4px)",
         }}
         open={publishLoading}
       >
         <div className="flex flex-col items-center">
           <CircularProgress color="inherit" size={60} />
           <p className="mt-4 text-lg font-medium">
-            {editingChart ? "Updating size chart..." : "Publishing size chart..."}
+            {editingChart
+              ? "Updating size chart..."
+              : "Publishing size chart..."}
           </p>
         </div>
       </Backdrop>
-
-      <ToastContainer 
-        position="bottom-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
     </div>
   );
 };

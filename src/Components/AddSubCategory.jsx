@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { IoClose, IoCloudUpload, IoChevronDown } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import  toast from "react-hot-toast";
 import axios from "axios";
 import Backdrop from "@mui/material/Backdrop";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -400,18 +399,6 @@ const AddSubCategory = ({ onClose }) => {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
-
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        draggable
-        pauseOnFocusLoss
-        theme="colored"
-      />
     </div>
   );
 };
