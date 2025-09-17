@@ -210,29 +210,8 @@ const Login = () => {
     } catch (error) {
       console.error("Admin Google Sign-In Error:", error);
 
-      // Handle specific Firebase errors
-      if (error.code) {
-        const firebaseErrors = {
-          "auth/popup-closed-by-user":
-            "Sign-in was cancelled. Please try again.",
-          "auth/popup-blocked":
-            "Popup was blocked. Please allow popups for this site.",
-          "auth/network-request-failed":
-            "Network error. Please check your connection.",
-          "auth/too-many-requests":
-            "Too many attempts. Please try again later.",
-          "auth/account-exists-with-different-credential":
-            "An account already exists with this email using a different sign-in method.",
-          "auth/cancelled-popup-request":
-            "Another sign-in popup is already open.",
-        };
-
-        toast.error(
-          firebaseErrors[error.code] || `Firebase error: ${error.message}`
-        );
-      }
-      // Handle backend/network errors with admin-specific messages
-      else if (error.response) {
+      // Handle backend/network errors FIRST - prioritize 403 responses
+      if (error.response) {
         if (error.response.status === 403) {
           // Admin access denied - show specific message
           toast.error(
@@ -252,6 +231,27 @@ const Login = () => {
             error.response.data.message || "Admin authentication failed."
           );
         }
+      }
+      // Handle specific Firebase errors
+      else if (error.code) {
+        const firebaseErrors = {
+          "auth/popup-closed-by-user":
+            "Sign-in was cancelled. Please try again.",
+          "auth/popup-blocked":
+            "Popup was blocked. Please allow popups for this site.",
+          "auth/network-request-failed":
+            "Network error. Please check your connection.",
+          "auth/too-many-requests":
+            "Too many attempts. Please try again later.",
+          "auth/account-exists-with-different-credential":
+            "An account already exists with this email using a different sign-in method.",
+          "auth/cancelled-popup-request":
+            "Another sign-in popup is already open.",
+        };
+
+        toast.error(
+          firebaseErrors[error.code] || `Firebase error: ${error.message}`
+        );
       }
       // Handle network/timeout errors
       else if (error.code === "ECONNABORTED") {
