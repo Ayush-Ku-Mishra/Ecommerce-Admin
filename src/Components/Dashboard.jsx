@@ -26,10 +26,14 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      const API_BASE_URL =
+        import.meta.env.VITE_BACKEND_URL ||
+        "https://myecommerce-backend-p8ca.onrender.com/api/v1";
+
       try {
         // Fetch users count
         try {
-          const usersRes = await fetch("/api/v1/user/count");
+          const usersRes = await fetch(`${API_BASE_URL}/user/count`);
           if (!usersRes.ok) throw new Error("Failed to fetch users count");
           const usersData = await usersRes.json();
           setTotalUsers(usersData.count || 0);
@@ -40,7 +44,9 @@ const Dashboard = () => {
 
         // Fetch categories
         try {
-          const categoriesRes = await fetch("/api/v1/category/get-categories");
+          const categoriesRes = await fetch(
+            `${API_BASE_URL}/category/get-categories`
+          );
           if (!categoriesRes.ok) throw new Error("Failed to fetch categories");
           const categoriesData = await categoriesRes.json();
           const rootCategories =
@@ -53,7 +59,9 @@ const Dashboard = () => {
 
         // Fetch products count
         try {
-          const productsRes = await fetch("/api/v1/product/getProductsCount");
+          const productsRes = await fetch(
+            `${API_BASE_URL}/product/getProductsCount`
+          );
           if (!productsRes.ok)
             throw new Error("Failed to fetch products count");
           const productsData = await productsRes.json();
@@ -64,9 +72,12 @@ const Dashboard = () => {
         }
 
         try {
-          const ordersRes = await fetch("/api/v1/payment/orders-count", {
-            credentials: "include",
-          });
+          const ordersRes = await fetch(
+            `${API_BASE_URL}/payment/orders-count`,
+            {
+              credentials: "include",
+            }
+          );
           if (!ordersRes.ok) throw new Error("Failed to fetch orders count");
           const ordersData = await ordersRes.json();
           setTotalOrders(ordersData.count || 0);
