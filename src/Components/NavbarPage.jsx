@@ -32,10 +32,16 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
   const [isOpen, setIsOpen] = useState(false); // Add this missing state
   const { user, setIsAuthenticated, setUser } = useContext(Context);
   const [localUser, setLocalUser] = useState(null);
-  const [currentLogo, setCurrentLogo] = useState("/api/placeholder/100/50");
+  const [currentLogo, setCurrentLogo] = useState("");
   const [logoLoading, setLogoLoading] = useState(true);
 
   useEffect(() => {
+    if (!currentLogo) {
+      setCurrentLogo(
+        `${import.meta.env.VITE_BACKEND_URL}/api/placeholder/100/50`
+      );
+    }
+
     const data = localStorage.getItem("user-info");
     if (data) {
       setLocalUser(JSON.parse(data));
