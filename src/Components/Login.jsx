@@ -116,7 +116,11 @@ const Login = () => {
         );
 
         if (response.data.token) {
-          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("admin_token", response.data.token);
+          localStorage.setItem(
+            "admin_user",
+            JSON.stringify(response.data.user)
+          );
         }
 
         toast.success(response.data.message);

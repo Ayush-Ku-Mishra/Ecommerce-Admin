@@ -134,7 +134,8 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
       setIsAuthenticated(false);
       setUser(null);
       localStorage.removeItem("user-info");
-      localStorage.removeItem("token"); // Also clear token
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_user");
       toast.success("Logged out successfully.");
       navigate("/");
     } catch {
