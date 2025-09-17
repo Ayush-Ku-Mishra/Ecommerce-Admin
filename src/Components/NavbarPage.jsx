@@ -12,7 +12,7 @@ import { LiaSignOutAltSolid } from "react-icons/lia";
 import Sidebar from "../Components/Sidebar";
 import { Context } from "../main";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import Logout from "./Logout";
 
 // Fallback logo - your original static logo

@@ -3,7 +3,7 @@ import { MdEmail, MdArrowBack, MdKey } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { Context } from "../main";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 
 const ForgotPassword = ({ onBack }) => {
   const { isAuthenticated } = useContext(Context);
@@ -19,21 +19,23 @@ const ForgotPassword = ({ onBack }) => {
 
   const onForgotPasswordSubmit = async (data) => {
     try {
-      await axios.post(
-        "http://localhost:8000/api/v1/user/password/forgot",
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/password/forgot`,
         { email: data.email },
         {
           withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
+
       toast.success(`Password reset link sent to ${data.email}! 📧`);
       setForgotEmail(data.email);
       reset();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send reset link. Please try again.");
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to send reset link. Please try again."
+      );
     }
   };
 
@@ -57,18 +59,25 @@ const ForgotPassword = ({ onBack }) => {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
           <MdKey className="w-8 h-8 text-orange-600" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">Reset Your Password</h3>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">
+          Reset Your Password
+        </h3>
         <p className="text-sm text-gray-600">
           Enter your email address and we'll send you a password reset link.
         </p>
         {forgotEmail && (
           <p className="text-sm text-green-600 mt-2">
-            Reset link sent to: <span className="font-medium">{forgotEmail}</span>
+            Reset link sent to:{" "}
+            <span className="font-medium">{forgotEmail}</span>
           </p>
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onForgotPasswordSubmit)} className="space-y-4" noValidate>
+      <form
+        onSubmit={handleSubmit(onForgotPasswordSubmit)}
+        className="space-y-4"
+        noValidate
+      >
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <MdEmail className="h-5 w-5 text-gray-600" />

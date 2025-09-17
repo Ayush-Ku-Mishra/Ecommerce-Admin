@@ -56,7 +56,7 @@ const OtpVerification = ({
     const otpCode = otp.join("");
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/v1/user/otp-verification",
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/otp-verification`,
         {
           email,
           phone,
@@ -67,6 +67,7 @@ const OtpVerification = ({
           headers: { "Content-Type": "application/json" },
         }
       );
+
       toast.success(response.data.message);
       setIsAuthenticated(true);
       setUser(response.data.user); // make sure backend returns this
@@ -83,8 +84,8 @@ const OtpVerification = ({
   const handleResendOTP = async () => {
     if (countdown === 0) {
       try {
-        await axios.post(
-          "http://localhost:8000/api/v1/user/resend-otp",
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/resend-otp`,
           {
             email,
             phone,

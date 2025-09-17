@@ -33,14 +33,17 @@ const ResetPassword = () => {
       return;
     }
     try {
-      await axios.put(
-        `http://localhost:8000/api/v1/user/password/reset/${token}`,
+      const response = await axios.put(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/user/password/reset/${token}`,
         { password: newPassword, confirmPassword },
         {
           withCredentials: true,
           headers: { "Content-Type": "application/json" },
         }
       );
+
       toast.success("Password reset successful! Please login.");
       reset();
       navigate("/login");

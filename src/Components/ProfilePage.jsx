@@ -18,7 +18,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Context } from "../main";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { PhoneInput } from "react-international-phone";
@@ -481,46 +481,13 @@ const ProfilePage = () => {
       >
         <DialogTitle>
           <Typography variant="h5" className="font-semibold">
-            Change Password
+            Set Password
           </Typography>
         </DialogTitle>
 
-        <form onSubmit={handleSubmit(handleChangePassword)}>
+        <form onSubmit={handleSubmit(handleSetPassword)}>
           <DialogContent>
             <div className="space-y-4 pt-2">
-              {/* Current Password */}
-              <TextField
-                label="Current Password"
-                type={showPasswords.currentPassword ? "text" : "password"}
-                fullWidth
-                size="small"
-                disabled={passwordLoading}
-                error={!!errors.currentPassword}
-                helperText={errors.currentPassword?.message}
-                {...register("currentPassword", {
-                  required: "Current password is required",
-                })}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() =>
-                          togglePasswordVisibility("currentPassword")
-                        }
-                        edge="end"
-                        size="small"
-                      >
-                        {showPasswords.currentPassword ? (
-                          <AiOutlineEyeInvisible />
-                        ) : (
-                          <AiOutlineEye />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
               {/* New Password */}
               <TextField
                 label="New Password"
@@ -534,7 +501,7 @@ const ProfilePage = () => {
                   "At least 6 chars, including uppercase, lowercase, number & special char"
                 }
                 {...register("newPassword", {
-                  required: "New password is required",
+                  required: "Password is required",
                   minLength: {
                     value: 6,
                     message: "Password must be at least 6 characters",
@@ -566,7 +533,7 @@ const ProfilePage = () => {
 
               {/* Confirm New Password */}
               <TextField
-                label="Confirm New Password"
+                label="Confirm Password"
                 type={showPasswords.confirmPassword ? "text" : "password"}
                 fullWidth
                 size="small"
@@ -574,7 +541,7 @@ const ProfilePage = () => {
                 error={!!errors.confirmPassword}
                 helperText={errors.confirmPassword?.message}
                 {...register("confirmPassword", {
-                  required: "Please confirm your new password",
+                  required: "Please confirm your password",
                   validate: (value) =>
                     value === newPassword || "Passwords do not match",
                 })}
@@ -614,7 +581,7 @@ const ProfilePage = () => {
               color="primary"
               disabled={passwordLoading}
             >
-              {passwordLoading ? "Changing..." : "Change Password"}
+              {passwordLoading ? "Setting..." : "Set Password"}
             </Button>
           </DialogActions>
         </form>
