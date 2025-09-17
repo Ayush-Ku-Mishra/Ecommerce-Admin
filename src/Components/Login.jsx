@@ -144,6 +144,13 @@ const Login = () => {
       };
 
       console.log("Sending user data to backend:", userData);
+      console.log("=== GOOGLE SIGNIN DEBUG ===");
+      console.log("VITE_BACKEND_URL:", import.meta.env.VITE_BACKEND_URL);
+      console.log(
+        "Full URL will be:",
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/authWithGoogle`
+      );
+      console.log("========================");
 
       // Send data to backend - always use authWithGoogle endpoint
       const response = await axios.post(
