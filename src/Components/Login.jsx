@@ -121,6 +121,7 @@ const Login = () => {
         setUser(response.data.user);
         navigate(redirectTo, { replace: true }); // <--- Redirect to wishlist or home
       } catch (error) {
+        console.error('Full login error response:', error.response?.data);
         toast.error(error.response?.data?.message || "Login failed");
       }
     }
