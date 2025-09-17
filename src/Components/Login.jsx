@@ -62,7 +62,7 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     if (currentView === "register") {
-      setRegisterLoading(true);
+      setRegisterLoading(true); // show loader
       data.phone = data.phone.startsWith("+91")
         ? data.phone
         : `+91${data.phone}`;
@@ -76,10 +76,7 @@ const Login = () => {
           data,
           {
             withCredentials: true,
-            headers: {
-              "Content-Type": "application/json",
-              "X-Admin-Request": "true",
-            },
+            headers: { "Content-Type": "application/json" },
           }
         );
 
@@ -87,10 +84,11 @@ const Login = () => {
         setRegisterData({
           email: data.email,
           phone: data.phone,
-          verificationMethod: data.verificationMethod,
+          verificationMethod: data.verificationMethod, // user's actual choice
         });
         setCurrentView("otp");
       } catch (error) {
+        // Handle admin access denied errors specifically
         if (error.response?.status === 403) {
           toast.error(
             "Access Denied: This email is not authorized for admin registration."
@@ -99,13 +97,12 @@ const Login = () => {
           toast.error(error.response?.data?.message || "Registration failed");
         }
       } finally {
-        setRegisterLoading(false);
+        setRegisterLoading(false); // hide loader after request
       }
       return;
     }
 
     if (currentView === "login") {
-      setRegisterLoading(true); // Add loading state for login too
       try {
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/admin/login`,
@@ -114,12 +111,10 @@ const Login = () => {
             withCredentials: true,
             headers: {
               "Content-Type": "application/json",
-              "X-Admin-Request": "true",
             },
           }
         );
 
-        // Store admin-specific tokens
         if (response.data.token) {
           localStorage.setItem("admin_token", response.data.token);
           localStorage.setItem(
@@ -131,8 +126,9 @@ const Login = () => {
         toast.success(response.data.message);
         setIsAuthenticated(true);
         setUser(response.data.user);
-        navigate(redirectTo, { replace: true });
+        navigate(redirectTo, { replace: true }); // <--- Redirect to admin dashboard
       } catch (error) {
+        // Handle admin access denied errors specifically
         if (error.response?.status === 403) {
           toast.error(
             "Access Denied: This email is not authorized for admin access."
@@ -140,8 +136,6 @@ const Login = () => {
         } else {
           toast.error(error.response?.data?.message || "Login failed");
         }
-      } finally {
-        setRegisterLoading(false);
       }
     }
   };
@@ -150,6 +144,7 @@ const Login = () => {
     setRegisterLoading(true);
 
     try {
+      // Configure popup to avoid CORS issues
       const provider = new GoogleAuthProvider();
       provider.addScope("email");
       provider.addScope("profile");
@@ -168,11 +163,20 @@ const Login = () => {
         avatar: user.photoURL || "",
         phone: user.phoneNumber || null,
         role: "admin",
-        isAdminLogin: true,
+        isAdminLogin: true, // Important: Flag for admin access
       };
 
       console.log("Sending admin user data to backend:", userData);
+      console.log("=== ADMIN GOOGLE SIGNIN DEBUG ===");
+      console.log("VITE_BACKEND_URL:", import.meta.env.VITE_BACKEND_URL);
+      console.log(
+        "Full URL will be:",
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/authWithGoogle`
+      );
+      console.log("Admin Login Flag:", userData.isAdminLogin);
+      console.log("===============================");
 
+      // Send data to backend - always use authWithGoogle endpoint
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/authWithGoogle`,
         userData,
@@ -180,30 +184,29 @@ const Login = () => {
           withCredentials: true,
           headers: {
             "Content-Type": "application/json",
-            "X-Admin-Request": "true",
           },
-          timeout: 10000,
+          timeout: 10000, // 10 second timeout
         }
       );
 
       console.log("Backend response:", response.data);
 
+      // Handle successful authentication
       if (response.data.success) {
-        // Store admin-specific token
+        // Store token if provided
         if (response.data.token) {
-          localStorage.setItem("admin_token", response.data.token);
-          localStorage.setItem(
-            "admin_user",
-            JSON.stringify(response.data.user)
-          );
+          localStorage.setItem("token", response.data.token);
         }
 
         toast.success(
           response.data.message || "Admin Google authentication successful!"
         );
 
+        // Update context
         setIsAuthenticated(true);
         setUser(response.data.user);
+
+        // Navigate to admin dashboard
         navigate(redirectTo, { replace: true });
       } else {
         throw new Error(response.data.message || "Authentication failed");
@@ -214,6 +217,7 @@ const Login = () => {
       // Handle backend/network errors FIRST - prioritize 403 responses
       if (error.response) {
         if (error.response.status === 403) {
+          // Admin access denied - show specific message
           toast.error(
             "Access Denied: This email is not authorized for admin access."
           );
@@ -232,7 +236,7 @@ const Login = () => {
           );
         }
       }
-      // Handle Firebase errors
+      // Handle specific Firebase errors
       else if (error.code) {
         const firebaseErrors = {
           "auth/popup-closed-by-user":
