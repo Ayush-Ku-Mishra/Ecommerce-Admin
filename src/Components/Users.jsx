@@ -250,6 +250,17 @@ const Users = () => {
 
     try {
       const BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
+      const loggedInUserId =
+        /* get logged in user ID from auth context or localStorage, e.g.: */ localStorage.getItem(
+          "userId"
+        );
+
+      // Prevent deleting own account on frontend
+      if (selectedUserIds.includes(loggedInUserId)) {
+        toast.error("Cannot delete your own account.");
+        setDeleteLoading((prev) => ({ ...prev, bulk: false }));
+        return;
+      }
 
       const response = await fetch(`${BASE_URL}/api/v1/user/bulk-delete`, {
         method: "DELETE",
@@ -259,6 +270,8 @@ const Users = () => {
         },
         body: JSON.stringify({ userIds: selectedUserIds }),
       });
+
+      const resData = await response.json();
 
       if (response.ok) {
         setUsers((prev) =>
@@ -276,9 +289,16 @@ const Users = () => {
           userName: "",
           selectedCount: 0,
         });
+        toast.success(
+          resData.message ||
+            `${resData.deletedCount} users deleted successfully`
+        );
       } else {
-        console.error("Failed to bulk delete users");
-        toast.error("Failed to delete selected users. Please try again.");
+        console.error("Failed to bulk delete users", resData.message);
+        toast.error(
+          resData.message ||
+            "Failed to delete selected users. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error bulk deleting users:", error);
