@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { FaSearch, FaTimes, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import {
+  FaSearch,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import Checkbox from "@mui/material/Checkbox";
 import TablePagination from "@mui/material/TablePagination";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -13,12 +18,12 @@ import { RiMailCheckLine } from "react-icons/ri";
 import { IoMdCall } from "react-icons/io";
 import { SlCalender } from "react-icons/sl";
 import { MdDelete } from "react-icons/md";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Zoom } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/zoom';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, Zoom } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/zoom";
 
 const ROWS_PER_PAGE = 50;
 
@@ -35,39 +40,48 @@ const Users = () => {
   const [imageModal, setImageModal] = useState({
     open: false,
     image: "",
-    userName: ""
+    userName: "",
   });
   const [deleteModal, setDeleteModal] = useState({
     open: false,
-    type: 'single', // 'single' or 'bulk'
+    type: "single", // 'single' or 'bulk'
     userId: null,
-    userName: '',
-    selectedCount: 0
+    userName: "",
+    selectedCount: 0,
   });
 
   // Fetch users from API
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/user/all', {
-        method: 'GET',
+      const BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
+
+      const response = await fetch(`${BASE_URL}/api/v1/user/all`, {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on your auth setup
-        }
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, 
+        },
+        credentials: "include", 
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || []);
-        setFilteredUsers(data.users || []);
-      } else {
-        console.error('Failed to fetch users');
+
+      if (!response.ok) {
+        console.error(
+          "Failed to fetch users:",
+          response.status,
+          response.statusText
+        );
         setUsers([]);
         setFilteredUsers([]);
+        return;
       }
+
+      const data = await response.json();
+
+      setUsers(data.users || []);
+      setFilteredUsers(data.users || []);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
       setUsers([]);
       setFilteredUsers([]);
     } finally {
@@ -84,10 +98,11 @@ const Users = () => {
     if (searchQuery.trim() === "") {
       setFilteredUsers(users);
     } else {
-      const filtered = users.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.phone.includes(searchQuery)
+      const filtered = users.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.phone.includes(searchQuery)
       );
       setFilteredUsers(filtered);
     }
@@ -115,11 +130,11 @@ const Users = () => {
   };
 
   const handleSelect = (globalIdx) => (event) => {
-    setSelected((prev) => ({ 
-      ...prev, 
-      [globalIdx]: event.target.checked 
+    setSelected((prev) => ({
+      ...prev,
+      [globalIdx]: event.target.checked,
     }));
-    
+
     // Update selectAll state
     const newSelected = { ...selected, [globalIdx]: event.target.checked };
     const selectedCount = Object.values(newSelected).filter(Boolean).length;
@@ -144,42 +159,48 @@ const Users = () => {
   const handleDeleteUser = async (user) => {
     setDeleteModal({
       open: true,
-      type: 'single',
+      type: "single",
       userId: user._id,
       userName: user.name,
-      selectedCount: 0
+      selectedCount: 0,
     });
   };
 
   // Confirm single user deletion
   const confirmDeleteUser = async () => {
     const userId = deleteModal.userId;
-    setDeleteLoading(prev => ({ ...prev, [userId]: true }));
-    
+    setDeleteLoading((prev) => ({ ...prev, [userId]: true }));
+
     try {
       const response = await fetch(`/api/v1/user/${userId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
       if (response.ok) {
-        setUsers(prev => prev.filter(user => user._id !== userId));
-        setFilteredUsers(prev => prev.filter(user => user._id !== userId));
+        setUsers((prev) => prev.filter((user) => user._id !== userId));
+        setFilteredUsers((prev) => prev.filter((user) => user._id !== userId));
         setSelected({});
         setSelectAll(false);
-        setDeleteModal({ open: false, type: 'single', userId: null, userName: '', selectedCount: 0 });
+        setDeleteModal({
+          open: false,
+          type: "single",
+          userId: null,
+          userName: "",
+          selectedCount: 0,
+        });
       } else {
-        console.error('Failed to delete user');
-        alert('Failed to delete user. Please try again.');
+        console.error("Failed to delete user");
+        alert("Failed to delete user. Please try again.");
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Error deleting user. Please try again.');
+      console.error("Error deleting user:", error);
+      alert("Error deleting user. Please try again.");
     } finally {
-      setDeleteLoading(prev => ({ ...prev, [userId]: false }));
+      setDeleteLoading((prev) => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -200,58 +221,80 @@ const Users = () => {
 
     setDeleteModal({
       open: true,
-      type: 'bulk',
+      type: "bulk",
       userId: null,
-      userName: '',
+      userName: "",
       selectedCount: selectedUserIds.length,
-      selectedUsers: selectedUserIds
+      selectedUsers: selectedUserIds,
     });
   };
 
   // Confirm bulk deletion
   const confirmBulkDelete = async () => {
-    const selectedUserIds = deleteModal.selectedUsers.map(user => user._id);
-    setDeleteLoading(prev => ({ ...prev, bulk: true }));
+    const selectedUserIds = deleteModal.selectedUsers.map((user) => user._id);
+    setDeleteLoading((prev) => ({ ...prev, bulk: true }));
 
     try {
-      const response = await fetch('/api/v1/user/bulk-delete', {
-        method: 'DELETE',
+      const response = await fetch("/api/v1/user/bulk-delete", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ userIds: selectedUserIds })
+        body: JSON.stringify({ userIds: selectedUserIds }),
       });
 
       if (response.ok) {
-        setUsers(prev => prev.filter(user => !selectedUserIds.includes(user._id)));
-        setFilteredUsers(prev => prev.filter(user => !selectedUserIds.includes(user._id)));
+        setUsers((prev) =>
+          prev.filter((user) => !selectedUserIds.includes(user._id))
+        );
+        setFilteredUsers((prev) =>
+          prev.filter((user) => !selectedUserIds.includes(user._id))
+        );
         setSelected({});
         setSelectAll(false);
-        setDeleteModal({ open: false, type: 'bulk', userId: null, userName: '', selectedCount: 0 });
+        setDeleteModal({
+          open: false,
+          type: "bulk",
+          userId: null,
+          userName: "",
+          selectedCount: 0,
+        });
       } else {
-        console.error('Failed to bulk delete users');
-        alert('Failed to delete selected users. Please try again.');
+        console.error("Failed to bulk delete users");
+        alert("Failed to delete selected users. Please try again.");
       }
     } catch (error) {
-      console.error('Error bulk deleting users:', error);
-      alert('Error deleting users. Please try again.');
+      console.error("Error bulk deleting users:", error);
+      alert("Error deleting users. Please try again.");
     } finally {
-      setDeleteLoading(prev => ({ ...prev, bulk: false }));
+      setDeleteLoading((prev) => ({ ...prev, bulk: false }));
     }
   };
 
   // Close delete modal
   const closeDeleteModal = () => {
-    setDeleteModal({ open: false, type: 'single', userId: null, userName: '', selectedCount: 0 });
+    setDeleteModal({
+      open: false,
+      type: "single",
+      userId: null,
+      userName: "",
+      selectedCount: 0,
+    });
   };
 
   // Generate avatar based on name's first letter
   const generateAvatar = (name, avatar) => {
     const firstLetter = name ? name.charAt(0).toUpperCase() : "?";
     const colors = [
-      "bg-purple-500", "bg-green-600", "bg-blue-500", "bg-red-500",
-      "bg-yellow-500", "bg-indigo-500", "bg-pink-500", "bg-teal-500"
+      "bg-purple-500",
+      "bg-green-600",
+      "bg-blue-500",
+      "bg-red-500",
+      "bg-yellow-500",
+      "bg-indigo-500",
+      "bg-pink-500",
+      "bg-teal-500",
     ];
     const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
 
@@ -261,7 +304,9 @@ const Users = () => {
           src={avatar}
           alt={name}
           className="w-[40px] h-[40px] md:w-[65px] md:h-[65px] rounded-md object-cover cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => setImageModal({ open: true, image: avatar, userName: name })}
+          onClick={() =>
+            setImageModal({ open: true, image: avatar, userName: name })
+          }
         />
       );
     }
@@ -277,7 +322,7 @@ const Users = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US');
+    return new Date(dateString).toLocaleDateString("en-US");
   };
 
   const formatPhone = (phone) => {
@@ -299,7 +344,9 @@ const Users = () => {
           </p>
 
           <div className="w-full md:col-span-1 lg:col-span-2">
-            <label htmlFor="userSearch" className="sr-only">Search</label>
+            <label htmlFor="userSearch" className="sr-only">
+              Search
+            </label>
             <div className="relative">
               <input
                 id="userSearch"
@@ -337,7 +384,7 @@ const Users = () => {
               <CircularProgress size={40} />
             </div>
           )}
-          
+
           <div className="w-full h-[400px] overflow-x-auto custom-scrollbar">
             <table
               className="min-w-[700px] w-full text-xs md:text-sm text-left rtl:text-right text-gray-500"
@@ -350,7 +397,9 @@ const Users = () => {
                       <Checkbox
                         size="small"
                         checked={selectAll}
-                        indeterminate={selectedCount > 0 && selectedCount < pagedData.length}
+                        indeterminate={
+                          selectedCount > 0 && selectedCount < pagedData.length
+                        }
                         onChange={handleSelectAll}
                       />
                     </div>
@@ -358,16 +407,28 @@ const Users = () => {
                   <th scope="col" className="px-0 py-0 whitespace-nowrap">
                     User
                   </th>
-                  <th scope="col" className="px-2 py-3 whitespace-nowrap md:px-6">
+                  <th
+                    scope="col"
+                    className="px-2 py-3 whitespace-nowrap md:px-6"
+                  >
                     Phone
                   </th>
-                  <th scope="col" className="px-2 py-3 whitespace-nowrap md:px-6">
+                  <th
+                    scope="col"
+                    className="px-2 py-3 whitespace-nowrap md:px-6"
+                  >
                     Status
                   </th>
-                  <th scope="col" className="px-2 py-3 whitespace-nowrap md:px-6">
+                  <th
+                    scope="col"
+                    className="px-2 py-3 whitespace-nowrap md:px-6"
+                  >
                     Created
                   </th>
-                  <th scope="col" className="px-2 py-3 whitespace-nowrap md:px-6">
+                  <th
+                    scope="col"
+                    className="px-2 py-3 whitespace-nowrap md:px-6"
+                  >
                     Action
                   </th>
                 </tr>
@@ -379,7 +440,9 @@ const Users = () => {
                   return (
                     <tr
                       key={user._id}
-                      className={`border-b border-gray-200 ${isChecked ? "bg-blue-50" : ""}`}
+                      className={`border-b border-gray-200 ${
+                        isChecked ? "bg-blue-50" : ""
+                      }`}
                     >
                       <td className="px-2 py-2 md:px-6">
                         <div className="w-[40px] md:w-[60px]">
@@ -417,14 +480,16 @@ const Users = () => {
                         </p>
                       </td>
                       <td className="px-2 py-2 md:px-6">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          user.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : user.status === 'suspended'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {user.status || 'inactive'}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            user.status === "active"
+                              ? "bg-green-100 text-green-800"
+                              : user.status === "suspended"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {user.status || "inactive"}
                         </span>
                       </td>
                       <td className="px-2 py-2 md:px-6">
@@ -456,8 +521,18 @@ const Users = () => {
                     <td colSpan="6" className="text-center py-16">
                       <div className="flex flex-col items-center justify-center space-y-4">
                         <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
-                          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-2.239"></path>
+                          <svg
+                            className="w-12 h-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1"
+                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-2.239"
+                            ></path>
                           </svg>
                         </div>
                         <div className="text-center">
@@ -465,10 +540,9 @@ const Users = () => {
                             {searchQuery ? "No users found" : "No users"}
                           </h3>
                           <p className="text-gray-500">
-                            {searchQuery 
-                              ? "No users match your search criteria. Try adjusting your search terms." 
-                              : "There are no users in the system yet."
-                            }
+                            {searchQuery
+                              ? "No users match your search criteria. Try adjusting your search terms."
+                              : "There are no users in the system yet."}
                           </p>
                         </div>
                       </div>
@@ -478,7 +552,7 @@ const Users = () => {
               </tbody>
             </table>
           </div>
-          
+
           <TablePagination
             component="div"
             count={filteredUsers.length}
@@ -507,21 +581,23 @@ const Users = () => {
         fullWidth
         PaperProps={{
           style: {
-            backgroundColor: 'transparent',
-            boxShadow: 'none',
-            maxWidth: '95vw',
-            maxHeight: '95vh',
+            backgroundColor: "transparent",
+            boxShadow: "none",
+            maxWidth: "95vw",
+            maxHeight: "95vh",
           },
         }}
       >
         <div className="relative bg-black rounded-lg overflow-hidden">
           <button
-            onClick={() => setImageModal({ open: false, image: "", userName: "" })}
+            onClick={() =>
+              setImageModal({ open: false, image: "", userName: "" })
+            }
             className="absolute top-4 right-4 z-50 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-all"
           >
             <FaTimes size={20} />
           </button>
-          
+
           <div className="flex items-center justify-center h-[80vh] p-4">
             <div className="swiper-zoom-container flex flex-col items-center justify-center h-full">
               <img
@@ -530,7 +606,9 @@ const Users = () => {
                 className="max-w-full max-h-[70vh] object-contain rounded-lg"
               />
               <div className="mt-4 text-center">
-                <p className="text-white text-lg font-medium">{imageModal.userName}</p>
+                <p className="text-white text-lg font-medium">
+                  {imageModal.userName}
+                </p>
                 <p className="text-gray-300 text-sm">User Avatar</p>
               </div>
             </div>
@@ -546,7 +624,7 @@ const Users = () => {
         fullWidth
         PaperProps={{
           style: {
-            borderRadius: '12px',
+            borderRadius: "12px",
           },
         }}
       >
@@ -557,7 +635,9 @@ const Users = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                {deleteModal.type === 'single' ? 'Delete User' : 'Delete Multiple Users'}
+                {deleteModal.type === "single"
+                  ? "Delete User"
+                  : "Delete Multiple Users"}
               </h3>
               <p className="text-sm text-gray-500 mt-1">
                 This action cannot be undone
@@ -565,10 +645,10 @@ const Users = () => {
             </div>
           </div>
         </DialogTitle>
-        
+
         <DialogContent sx={{ pt: 2 }}>
           <div className="space-y-4">
-            {deleteModal.type === 'single' ? (
+            {deleteModal.type === "single" ? (
               <div>
                 <p className="text-gray-700 mb-3">
                   Are you sure you want to permanently delete this user?
@@ -579,7 +659,9 @@ const Users = () => {
                       {deleteModal.userName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{deleteModal.userName}</p>
+                      <p className="font-medium text-gray-900">
+                        {deleteModal.userName}
+                      </p>
                       <p className="text-sm text-gray-500">User Account</p>
                     </div>
                   </div>
@@ -588,7 +670,11 @@ const Users = () => {
             ) : (
               <div>
                 <p className="text-gray-700 mb-3">
-                  Are you sure you want to permanently delete <span className="font-semibold">{deleteModal.selectedCount}</span> selected users?
+                  Are you sure you want to permanently delete{" "}
+                  <span className="font-semibold">
+                    {deleteModal.selectedCount}
+                  </span>{" "}
+                  selected users?
                 </p>
                 <div className="bg-gray-50 rounded-lg p-4 border">
                   <div className="flex items-center gap-3">
@@ -607,16 +693,27 @@ const Users = () => {
                 </div>
               </div>
             )}
-            
+
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex gap-3">
-                <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <div>
                   <h4 className="text-sm font-medium text-red-800">Warning</h4>
                   <p className="text-sm text-red-700 mt-1">
-                    This action will permanently remove the user{deleteModal.type === 'bulk' ? 's' : ''} from the database along with their profile data and avatar images. This cannot be undone.
+                    This action will permanently remove the user
+                    {deleteModal.type === "bulk" ? "s" : ""} from the database
+                    along with their profile data and avatar images. This cannot
+                    be undone.
                   </p>
                 </div>
               </div>
@@ -634,20 +731,29 @@ const Users = () => {
             Cancel
           </Button>
           <Button
-            onClick={deleteModal.type === 'single' ? confirmDeleteUser : confirmBulkDelete}
+            onClick={
+              deleteModal.type === "single"
+                ? confirmDeleteUser
+                : confirmBulkDelete
+            }
             variant="contained"
             color="error"
             disabled={deleteLoading[deleteModal.userId] || deleteLoading.bulk}
             startIcon={
-              (deleteLoading[deleteModal.userId] || deleteLoading.bulk) ? 
-              <CircularProgress size={16} color="inherit" /> : 
-              <MdDelete />
+              deleteLoading[deleteModal.userId] || deleteLoading.bulk ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <MdDelete />
+              )
             }
           >
-            {(deleteLoading[deleteModal.userId] || deleteLoading.bulk) ? 
-              'Deleting...' : 
-              `Delete ${deleteModal.type === 'bulk' ? `${deleteModal.selectedCount} Users` : 'User'}`
-            }
+            {deleteLoading[deleteModal.userId] || deleteLoading.bulk
+              ? "Deleting..."
+              : `Delete ${
+                  deleteModal.type === "bulk"
+                    ? `${deleteModal.selectedCount} Users`
+                    : "User"
+                }`}
           </Button>
         </DialogActions>
       </Dialog>

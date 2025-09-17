@@ -2,6 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { IoCloudUpload, IoImageOutline } from "react-icons/io5";
 import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import toast from 'react-hot-toast';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography
+} from '@mui/material';
 
 const ManageLogo = () => {
   const [logoFile, setLogoFile] = useState(null);
@@ -18,24 +27,32 @@ const ManageLogo = () => {
     image: "",
     name: "",
   });
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    open: false,
+    logo: null
+  });
   const fileInputRef = useRef(null);
-
-  // Toast-like notification function (simplified)
-  const showNotification = (message, type = "info") => {
-    console.log(`${type.toUpperCase()}: ${message}`);
-    // You can replace this with your preferred notification system
-    alert(`${type.toUpperCase()}: ${message}`);
-  };
 
   // Function to notify sidebar about logo changes
   const notifySidebarUpdate = () => {
-    // Dispatch a custom event that the sidebar can listen to
     window.dispatchEvent(new CustomEvent("logoUpdated"));
   };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file.");
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB.");
+      return;
+    }
 
     setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
@@ -64,11 +81,11 @@ const ManageLogo = () => {
         const data = await response.json();
         setLogos(data.logos || []);
       } else {
-        showNotification("Failed to fetch logos", "error");
+        toast.error("Failed to fetch logos");
       }
     } catch (error) {
       console.error("Error fetching logos:", error);
-      showNotification("Error loading logos", "error");
+      toast.error("Error loading logos");
     } finally {
       setLoading((prev) => ({ ...prev, fetching: false }));
     }
@@ -77,7 +94,7 @@ const ManageLogo = () => {
   // Handle upload/update logo
   const handleUpload = async () => {
     if (!logoFile) {
-      showNotification("Please select a logo image before uploading.", "error");
+      toast.error("Please select a logo image before uploading.");
       return;
     }
 
@@ -107,7 +124,7 @@ const ManageLogo = () => {
       const logoUrl = uploadData.images[0];
 
       if (editIndex !== null) {
-        // Update existing logo
+        // Update existing logo - backend will automatically delete old image
         const logoToUpdate = logos[editIndex];
 
         const updateResponse = await fetch(
@@ -126,11 +143,10 @@ const ManageLogo = () => {
         );
 
         if (updateResponse.ok) {
-          showNotification("Logo updated successfully!", "success");
+          toast.success("Logo updated successfully!");
           setEditIndex(null);
           notifySidebarUpdate();
         } else {
-          await deleteFromCloudinary(logoUrl);
           throw new Error("Failed to update logo");
         }
       } else {
@@ -151,10 +167,9 @@ const ManageLogo = () => {
         );
 
         if (createResponse.ok) {
-          showNotification("Logo uploaded successfully!", "success");
+          toast.success("Logo uploaded successfully!");
           notifySidebarUpdate();
         } else {
-          await deleteFromCloudinary(logoUrl);
           throw new Error("Failed to save logo");
         }
       }
@@ -166,40 +181,21 @@ const ManageLogo = () => {
       resetForm();
     } catch (error) {
       console.error("Upload error:", error);
-      showNotification(error.message || "Error uploading logo", "error");
+      toast.error(error.message || "Error uploading logo");
     } finally {
       setLoading((prev) => ({ ...prev, upload: false }));
     }
   };
 
-  // Delete image from Cloudinary
-  const deleteFromCloudinary = async (imageUrl) => {
-    try {
-      await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/v1/logo/deleteImage?img=${encodeURIComponent(imageUrl)}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-    } catch (error) {
-      console.warn("Failed to delete from Cloudinary:", error);
-    }
+  // Handle delete logo confirmation
+  const handleDeleteClick = (logo) => {
+    setDeleteConfirm({ open: true, logo });
   };
 
   // Handle delete logo
-  const handleDelete = async (logo) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this logo? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
+  const handleDelete = async () => {
+    const { logo } = deleteConfirm;
+    if (!logo) return;
 
     setLoading((prev) => ({
       ...prev,
@@ -207,8 +203,8 @@ const ManageLogo = () => {
     }));
 
     try {
-      // Delete from database (this will also delete from Cloudinary automatically)
-      const response = await fetch(`/api/v1/logo/${logo._id}`, {
+      // Delete from database (backend will also delete from Cloudinary automatically)
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/${logo._id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -218,20 +214,20 @@ const ManageLogo = () => {
       if (response.ok) {
         // Remove from local state
         setLogos((prev) => prev.filter((l) => l._id !== logo._id));
-        showNotification("Logo deleted successfully!", "success");
-        // Notify sidebar to update
+        toast.success("Logo deleted successfully!");
         notifySidebarUpdate();
       } else {
         throw new Error("Failed to delete logo");
       }
     } catch (error) {
       console.error("Delete error:", error);
-      showNotification(error.message || "Error deleting logo", "error");
+      toast.error(error.message || "Error deleting logo");
     } finally {
       setLoading((prev) => ({
         ...prev,
         delete: { ...prev.delete, [logo._id]: false },
       }));
+      setDeleteConfirm({ open: false, logo: null });
     }
   };
 
@@ -245,10 +241,7 @@ const ManageLogo = () => {
       fileInputRef.current.value = "";
     }
     setLogoFile(null); // User needs to select new file
-    showNotification(
-      "Please select the new image file to replace the current logo",
-      "info"
-    );
+    toast.info("Please select the new image file to replace the current logo");
   };
 
   // Reset form
@@ -452,7 +445,7 @@ const ManageLogo = () => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(logo)}
+                        onClick={() => handleDeleteClick(logo)}
                         disabled={loading.delete[logo._id]}
                         className="flex-1 px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50"
                       >
@@ -495,6 +488,40 @@ const ManageLogo = () => {
           </div>
         </div>
       )}
+
+      {/* MUI Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, logo: null })}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete "{deleteConfirm.logo?.name || 'this logo'}"? 
+            This action cannot be undone and the logo will be permanently removed from both the database and cloud storage.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setDeleteConfirm({ open: false, logo: null })}
+            color="primary"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDelete}
+            color="error"
+            variant="contained"
+            disabled={loading.delete[deleteConfirm.logo?._id]}
+          >
+            {loading.delete[deleteConfirm.logo?._id] ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
