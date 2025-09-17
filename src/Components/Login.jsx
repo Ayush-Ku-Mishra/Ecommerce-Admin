@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Context } from "../main";
 import axios from "axios";
-import  toast  from "react-hot-toast";
+import toast from "react-hot-toast";
 import Logo from "../assets/PickoraLogo1.png";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
@@ -66,6 +66,14 @@ const Login = () => {
       data.phone = data.phone.startsWith("+91")
         ? data.phone
         : `+91${data.phone}`;
+      console.log("=== REGISTER DEBUG ===");
+      console.log("VITE_BACKEND_URL:", import.meta.env.VITE_BACKEND_URL);
+      console.log(
+        "Full URL:",
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`
+      );
+      console.log("Data being sent:", data);
+      console.log("====================");
       try {
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`,
