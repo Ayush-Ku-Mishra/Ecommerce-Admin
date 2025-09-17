@@ -11,13 +11,17 @@ const ManageLogo = () => {
   const [loading, setLoading] = useState({
     upload: false,
     delete: {},
-    fetching: false
+    fetching: false,
   });
-  const [viewModal, setViewModal] = useState({ open: false, image: "", name: "" });
+  const [viewModal, setViewModal] = useState({
+    open: false,
+    image: "",
+    name: "",
+  });
   const fileInputRef = useRef(null);
 
   // Toast-like notification function (simplified)
-  const showNotification = (message, type = 'info') => {
+  const showNotification = (message, type = "info") => {
     console.log(`${type.toUpperCase()}: ${message}`);
     // You can replace this with your preferred notification system
     alert(`${type.toUpperCase()}: ${message}`);
@@ -26,7 +30,7 @@ const ManageLogo = () => {
   // Function to notify sidebar about logo changes
   const notifySidebarUpdate = () => {
     // Dispatch a custom event that the sidebar can listen to
-    window.dispatchEvent(new CustomEvent('logoUpdated'));
+    window.dispatchEvent(new CustomEvent("logoUpdated"));
   };
 
   // Fetch existing logos on component mount
@@ -36,15 +40,18 @@ const ManageLogo = () => {
 
   // Fetch logos from backend
   const fetchLogos = async () => {
-    setLoading(prev => ({ ...prev, fetching: true }));
+    setLoading((prev) => ({ ...prev, fetching: true }));
     try {
-      const response = await fetch('/api/v1/logo/all', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/all`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-      });
-      
+      );
+
       if (response.ok) {
         const data = await response.json();
         setLogos(data.logos || []);
@@ -52,32 +59,11 @@ const ManageLogo = () => {
         showNotification("Failed to fetch logos", "error");
       }
     } catch (error) {
-      console.error('Error fetching logos:', error);
+      console.error("Error fetching logos:", error);
       showNotification("Error loading logos", "error");
     } finally {
-      setLoading(prev => ({ ...prev, fetching: false }));
+      setLoading((prev) => ({ ...prev, fetching: false }));
     }
-  };
-
-  // Handle logo file selection
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      showNotification("Please select a valid image file.", "error");
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      showNotification("File size should be less than 5MB.", "error");
-      return;
-    }
-
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
   };
 
   // Handle upload/update logo
@@ -87,20 +73,23 @@ const ManageLogo = () => {
       return;
     }
 
-    setLoading(prev => ({ ...prev, upload: true }));
-    
+    setLoading((prev) => ({ ...prev, upload: true }));
+
     try {
       // First, upload the image to get the URL
       const formData = new FormData();
-      formData.append('images', logoFile);
+      formData.append("images", logoFile);
 
-      const uploadResponse = await fetch('/api/v1/logo/upload-images', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      });
+      const uploadResponse = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/upload-images`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
+        }
+      );
 
       if (!uploadResponse.ok) {
         throw new Error("Failed to upload image");
@@ -108,105 +97,119 @@ const ManageLogo = () => {
 
       const uploadData = await uploadResponse.json();
       const logoUrl = uploadData.images[0];
-      
+
       if (editIndex !== null) {
-        // Update existing logo - the old image will be automatically deleted from Cloudinary
+        // Update existing logo
         const logoToUpdate = logos[editIndex];
-        
-        const updateResponse = await fetch(`/api/v1/logo/${logoToUpdate._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ 
-            url: logoUrl, 
-            name: logoFile.name || logoToUpdate.name 
-          })
-        });
-        
+
+        const updateResponse = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo/${logoToUpdate._id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              url: logoUrl,
+              name: logoFile.name || logoToUpdate.name,
+            }),
+          }
+        );
+
         if (updateResponse.ok) {
           showNotification("Logo updated successfully!", "success");
           setEditIndex(null);
-          // Notify sidebar to update
           notifySidebarUpdate();
         } else {
-          // If update fails, we should clean up the uploaded image
           await deleteFromCloudinary(logoUrl);
           throw new Error("Failed to update logo");
         }
       } else {
         // Add new logo to database
-        const createResponse = await fetch('/api/v1/logo', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ 
-            url: logoUrl, 
-            name: logoFile.name || 'Untitled Logo'
-          })
-        });
-        
+        const createResponse = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/logo`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              url: logoUrl,
+              name: logoFile.name || "Untitled Logo",
+            }),
+          }
+        );
+
         if (createResponse.ok) {
           showNotification("Logo uploaded successfully!", "success");
-          // Notify sidebar to update
           notifySidebarUpdate();
         } else {
-          // If create fails, we should clean up the uploaded image
           await deleteFromCloudinary(logoUrl);
           throw new Error("Failed to save logo");
         }
       }
-      
+
       // Refresh logos list
       await fetchLogos();
-      
+
       // Reset form
       resetForm();
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       showNotification(error.message || "Error uploading logo", "error");
     } finally {
-      setLoading(prev => ({ ...prev, upload: false }));
+      setLoading((prev) => ({ ...prev, upload: false }));
     }
   };
 
-  // Delete image from Cloudinary (helper function for cleanup)
+  // Delete image from Cloudinary
   const deleteFromCloudinary = async (imageUrl) => {
     try {
-      await fetch(`/api/v1/logo/deleteImage?img=${encodeURIComponent(imageUrl)}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      await fetch(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/logo/deleteImage?img=${encodeURIComponent(imageUrl)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-      });
+      );
     } catch (error) {
-      console.warn('Failed to delete from Cloudinary:', error);
+      console.warn("Failed to delete from Cloudinary:", error);
     }
   };
 
   // Handle delete logo
   const handleDelete = async (logo) => {
-    if (!confirm('Are you sure you want to delete this logo? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this logo? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
-    setLoading(prev => ({ ...prev, delete: { ...prev.delete, [logo._id]: true } }));
-    
+    setLoading((prev) => ({
+      ...prev,
+      delete: { ...prev.delete, [logo._id]: true },
+    }));
+
     try {
       // Delete from database (this will also delete from Cloudinary automatically)
       const response = await fetch(`/api/v1/logo/${logo._id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
-      
+
       if (response.ok) {
         // Remove from local state
-        setLogos(prev => prev.filter(l => l._id !== logo._id));
+        setLogos((prev) => prev.filter((l) => l._id !== logo._id));
         showNotification("Logo deleted successfully!", "success");
         // Notify sidebar to update
         notifySidebarUpdate();
@@ -214,12 +217,12 @@ const ManageLogo = () => {
         throw new Error("Failed to delete logo");
       }
     } catch (error) {
-      console.error('Delete error:', error);
+      console.error("Delete error:", error);
       showNotification(error.message || "Error deleting logo", "error");
     } finally {
-      setLoading(prev => ({ 
-        ...prev, 
-        delete: { ...prev.delete, [logo._id]: false } 
+      setLoading((prev) => ({
+        ...prev,
+        delete: { ...prev.delete, [logo._id]: false },
       }));
     }
   };
@@ -234,7 +237,10 @@ const ManageLogo = () => {
       fileInputRef.current.value = "";
     }
     setLogoFile(null); // User needs to select new file
-    showNotification("Please select the new image file to replace the current logo", "info");
+    showNotification(
+      "Please select the new image file to replace the current logo",
+      "info"
+    );
   };
 
   // Reset form
@@ -288,7 +294,9 @@ const ManageLogo = () => {
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-gray-700 group-hover:text-blue-600">
-                      {editIndex !== null ? "Select New Logo" : "Click to Upload Logo"}
+                      {editIndex !== null
+                        ? "Select New Logo"
+                        : "Click to Upload Logo"}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
                       PNG, JPG, GIF up to 5MB
@@ -336,7 +344,7 @@ const ManageLogo = () => {
                 )}
                 {editIndex !== null ? "Update Logo" : "Upload Logo"}
               </button>
-              
+
               {(logoPreview || editIndex !== null) && (
                 <button
                   onClick={resetForm}
@@ -353,9 +361,11 @@ const ManageLogo = () => {
         {/* Logos List */}
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-800">Stored Logos</h3>
+            <h3 className="text-xl font-semibold text-gray-800">
+              Stored Logos
+            </h3>
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              {logos.length} {logos.length === 1 ? 'Logo' : 'Logos'}
+              {logos.length} {logos.length === 1 ? "Logo" : "Logos"}
             </span>
           </div>
 
@@ -372,8 +382,12 @@ const ManageLogo = () => {
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <IoImageOutline className="text-4xl text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Logos Yet</h3>
-              <p className="text-gray-500">Upload your first logo to get started</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Logos Yet
+              </h3>
+              <p className="text-gray-500">
+                Upload your first logo to get started
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -389,7 +403,7 @@ const ManageLogo = () => {
                       alt={logo.name || `Logo ${index + 1}`}
                       className="max-w-full max-h-full object-contain"
                     />
-                    
+
                     {/* Loading overlay for individual logo */}
                     {loading.delete[logo._id] && (
                       <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
@@ -407,7 +421,10 @@ const ManageLogo = () => {
                       {logo.name || `Logo ${index + 1}`}
                     </h4>
                     <p className="text-sm text-gray-500 mb-4">
-                      Uploaded: {new Date(logo.createdAt || Date.now()).toLocaleDateString()}
+                      Uploaded:{" "}
+                      {new Date(
+                        logo.createdAt || Date.now()
+                      ).toLocaleDateString()}
                     </p>
 
                     {/* Action Buttons */}
@@ -463,7 +480,9 @@ const ManageLogo = () => {
                 alt={viewModal.name}
                 className="max-w-full max-h-[70vh] object-contain mx-auto"
               />
-              <p className="text-gray-800 mt-4 text-lg font-medium">{viewModal.name}</p>
+              <p className="text-gray-800 mt-4 text-lg font-medium">
+                {viewModal.name}
+              </p>
             </div>
           </div>
         </div>
