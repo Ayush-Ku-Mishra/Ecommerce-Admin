@@ -33,6 +33,14 @@ const ManageLogo = () => {
     window.dispatchEvent(new CustomEvent("logoUpdated"));
   };
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
   // Fetch existing logos on component mount
   useEffect(() => {
     fetchLogos();
