@@ -18,8 +18,8 @@ export const Context = createContext({
 });
 
 const AppWrapper = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState();
-  const [user, setUser] = useState();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
@@ -29,9 +29,22 @@ const AppWrapper = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/me`,
           { withCredentials: true }
         );
-        setUser(res.data.user);
-        setIsAuthenticated(true);
-        setSessionExpired(false);
+
+        // ✅ Role check: only allow "admin" (and moderator/seller if required)
+        if (res.data.user.role === "admin") {
+          setUser(res.data.user);
+          setIsAuthenticated(true);
+          setSessionExpired(false);
+        } else {
+          // ❌ If a normal user tries to open admin panel, force logout
+          await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+            { withCredentials: true }
+          );
+          setUser(null);
+          setIsAuthenticated(false);
+          toast.error("Unauthorized access. Admin login required.");
+        }
       } catch (error) {
         setUser(null);
         setIsAuthenticated(false);
