@@ -125,28 +125,54 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
 
   const handleLogout = async () => {
     try {
-      await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
-        {
-          withCredentials: true,
-        }
-      );
-      setIsAuthenticated(false);
-      setUser(null);
-      localStorage.removeItem("user-info");
+      const adminToken = localStorage.getItem("admin_token");
+
+      if (adminToken) {
+        // Use token-based logout for admin
+        await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+          {
+            headers: {
+              Authorization: `Bearer ${adminToken}`,
+              "X-Admin-Request": "true",
+            },
+          }
+        );
+      } else {
+        // Fallback to cookie-based logout
+        await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+          {
+            withCredentials: true,
+            headers: {
+              "X-Admin-Request": "true",
+            },
+          }
+        );
+      }
+
+      // Clear admin-specific localStorage
       localStorage.removeItem("admin_token");
       localStorage.removeItem("admin_user");
-      toast.success("Logged out successfully.");
+      localStorage.removeItem("user-info"); // Legacy cleanup
+
+      setIsAuthenticated(false);
+      setUser(null);
+      toast.success("Admin logged out successfully.");
       navigate("/");
-    } catch {
+    } catch (error) {
+      console.error("Admin logout error:", error);
+
+      // Even if backend call fails, clear local storage
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_user");
+      localStorage.removeItem("user-info");
+
+      setIsAuthenticated(false);
+      setUser(null);
       toast.error("Logout failed. Please try again.");
     }
     setShowConfirm(false);
-  };
-
-  const handleLogoutClick = () => {
-    handleMenuClose();
-    setShowConfirm(true);
   };
 
   const handleLogoError = () => {
