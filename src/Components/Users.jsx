@@ -24,6 +24,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/zoom";
+import toast from "react-hot-toast";
 
 const ROWS_PER_PAGE = 50;
 
@@ -60,9 +61,9 @@ const Users = () => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`, 
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        credentials: "include", 
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -98,12 +99,18 @@ const Users = () => {
     if (searchQuery.trim() === "") {
       setFilteredUsers(users);
     } else {
-      const filtered = users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.phone.includes(searchQuery)
-      );
+      const filtered = users.filter((user) => {
+        const name = user.name || "";
+        const email = user.email || "";
+        const phone = user.phone || "";
+
+        return (
+          name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          phone.includes(searchQuery)
+        );
+      });
+
       setFilteredUsers(filtered);
     }
     setPage(0); // Reset to first page on search
@@ -172,7 +179,9 @@ const Users = () => {
     setDeleteLoading((prev) => ({ ...prev, [userId]: true }));
 
     try {
-      const response = await fetch(`/api/v1/user/${userId}`, {
+      const BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
+
+      const response = await fetch(`${BASE_URL}/api/v1/user/${userId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -194,11 +203,11 @@ const Users = () => {
         });
       } else {
         console.error("Failed to delete user");
-        alert("Failed to delete user. Please try again.");
+        toast.error("Failed to delete user. Please try again.");
       }
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Error deleting user. Please try again.");
+      toast.error("Error deleting user. Please try again.");
     } finally {
       setDeleteLoading((prev) => ({ ...prev, [userId]: false }));
     }
@@ -235,7 +244,9 @@ const Users = () => {
     setDeleteLoading((prev) => ({ ...prev, bulk: true }));
 
     try {
-      const response = await fetch("/api/v1/user/bulk-delete", {
+      const BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
+
+      const response = await fetch(`${BASE_URL}/api/v1/user/bulk-delete`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -262,11 +273,11 @@ const Users = () => {
         });
       } else {
         console.error("Failed to bulk delete users");
-        alert("Failed to delete selected users. Please try again.");
+        toast.error("Failed to delete selected users. Please try again.");
       }
     } catch (error) {
       console.error("Error bulk deleting users:", error);
-      alert("Error deleting users. Please try again.");
+      toast.error("Error deleting users. Please try again.");
     } finally {
       setDeleteLoading((prev) => ({ ...prev, bulk: false }));
     }
