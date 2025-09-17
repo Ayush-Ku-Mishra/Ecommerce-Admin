@@ -11,7 +11,6 @@ import {
 import { IoImageOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import AddCategory from "./AddCategory"; // Assume proper relative path
 import { Swiper, SwiperSlide } from "swiper/react";
