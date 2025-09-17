@@ -66,14 +66,10 @@ const Login = () => {
       data.phone = data.phone.startsWith("+91")
         ? data.phone
         : `+91${data.phone}`;
-      console.log("=== REGISTER DEBUG ===");
-      console.log("VITE_BACKEND_URL:", import.meta.env.VITE_BACKEND_URL);
-      console.log(
-        "Full URL:",
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`
-      );
-      console.log("Data being sent:", data);
-      console.log("====================");
+
+      // Add admin registration flag for admin website
+      data.isAdminRegistration = true;
+
       try {
         const response = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/register`,
@@ -88,11 +84,18 @@ const Login = () => {
         setRegisterData({
           email: data.email,
           phone: data.phone,
-          verificationMethod: data.verificationMethod, // user’s actual choice
+          verificationMethod: data.verificationMethod, // user's actual choice
         });
         setCurrentView("otp");
       } catch (error) {
-        toast.error(error.response?.data?.message || "Registration failed");
+        // Handle admin access denied errors specifically
+        if (error.response?.status === 403) {
+          toast.error(
+            "Access Denied: This email is not authorized for admin registration."
+          );
+        } else {
+          toast.error(error.response?.data?.message || "Registration failed");
+        }
       } finally {
         setRegisterLoading(false); // hide loader after request
       }
@@ -119,10 +122,16 @@ const Login = () => {
         toast.success(response.data.message);
         setIsAuthenticated(true);
         setUser(response.data.user);
-        navigate(redirectTo, { replace: true }); // <--- Redirect to wishlist or home
+        navigate(redirectTo, { replace: true }); // <--- Redirect to admin dashboard
       } catch (error) {
-        console.error('Full login error response:', error.response?.data);
-        toast.error(error.response?.data?.message || "Login failed");
+        // Handle admin access denied errors specifically
+        if (error.response?.status === 403) {
+          toast.error(
+            "Access Denied: This email is not authorized for admin access."
+          );
+        } else {
+          toast.error(error.response?.data?.message || "Login failed");
+        }
       }
     }
   };
@@ -136,30 +145,32 @@ const Login = () => {
       provider.addScope("email");
       provider.addScope("profile");
 
-      console.log("🚀 Starting Google Sign-In...");
+      console.log("🚀 Starting Google Sign-In for Admin...");
 
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
       console.log("Google Sign-In Result:", user);
 
-      // Prepare user data for backend
+      // Prepare user data for backend with admin flag
       const userData = {
         name: user.displayName,
         email: user.email,
         avatar: user.photoURL || "",
         phone: user.phoneNumber || null,
-        role: "user",
+        role: "admin",
+        isAdminLogin: true, // Important: Flag for admin access
       };
 
-      console.log("Sending user data to backend:", userData);
-      console.log("=== GOOGLE SIGNIN DEBUG ===");
+      console.log("Sending admin user data to backend:", userData);
+      console.log("=== ADMIN GOOGLE SIGNIN DEBUG ===");
       console.log("VITE_BACKEND_URL:", import.meta.env.VITE_BACKEND_URL);
       console.log(
         "Full URL will be:",
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/authWithGoogle`
       );
-      console.log("========================");
+      console.log("Admin Login Flag:", userData.isAdminLogin);
+      console.log("===============================");
 
       // Send data to backend - always use authWithGoogle endpoint
       const response = await axios.post(
@@ -184,20 +195,20 @@ const Login = () => {
         }
 
         toast.success(
-          response.data.message || "Google authentication successful!"
+          response.data.message || "Admin Google authentication successful!"
         );
 
         // Update context
         setIsAuthenticated(true);
         setUser(response.data.user);
 
-        // Navigate to intended page
+        // Navigate to admin dashboard
         navigate(redirectTo, { replace: true });
       } else {
         throw new Error(response.data.message || "Authentication failed");
       }
     } catch (error) {
-      console.error("Google Sign-In Error:", error);
+      console.error("Admin Google Sign-In Error:", error);
 
       // Handle specific Firebase errors
       if (error.code) {
@@ -220,9 +231,14 @@ const Login = () => {
           firebaseErrors[error.code] || `Firebase error: ${error.message}`
         );
       }
-      // Handle backend/network errors
+      // Handle backend/network errors with admin-specific messages
       else if (error.response) {
-        if (error.response.status === 500) {
+        if (error.response.status === 403) {
+          // Admin access denied - show specific message
+          toast.error(
+            "Access Denied: This email is not authorized for admin access."
+          );
+        } else if (error.response.status === 500) {
           toast.error("Server error. Please try again in a moment.");
           console.error("Server Error Details:", error.response.data);
         } else if (error.response.status === 400) {
@@ -232,7 +248,9 @@ const Login = () => {
         } else if (error.response.status === 404) {
           toast.error("Service not found. Please contact support.");
         } else {
-          toast.error(error.response.data.message || "Authentication failed.");
+          toast.error(
+            error.response.data.message || "Admin authentication failed."
+          );
         }
       }
       // Handle network/timeout errors
@@ -245,7 +263,7 @@ const Login = () => {
       }
       // Generic error
       else {
-        toast.error("Google authentication failed. Please try again.");
+        toast.error("Admin Google authentication failed. Please try again.");
         console.error("Unexpected error:", error);
       }
     } finally {
