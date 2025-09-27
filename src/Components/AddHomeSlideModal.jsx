@@ -48,11 +48,11 @@ const AddHomeSliderModal = () => {
 
       const response = await axios.post(
         `${API_BASE}/api/v1/slider/create`,
-        formDataOrData,
+        formData, 
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data", 
           },
           withCredentials: true,
         }
