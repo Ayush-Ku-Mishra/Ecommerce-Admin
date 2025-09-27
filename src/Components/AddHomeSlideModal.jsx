@@ -47,14 +47,14 @@ const AddHomeSliderModal = () => {
       });
 
       const response = await axios.post(
-        `${API_BASE}/api/v1/slider/upload-images`,
-        formData,
+        `${API_BASE}/api/v1/slider/create`,
+        formDataOrData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
           },
-          withCredentials: true, // <-- this is correct usage
+          withCredentials: true,
         }
       );
 
