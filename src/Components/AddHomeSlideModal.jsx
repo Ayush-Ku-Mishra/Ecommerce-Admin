@@ -38,32 +38,41 @@ const AddHomeSliderModal = () => {
     }
   };
 
-  // Upload images to Cloudinary
+  // Upload images to Cloudinary - FIXED
   const uploadToCloudinary = async (files) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+
       const formData = new FormData();
       files.forEach((file) => {
         formData.append("images", file.file || file);
       });
 
       const response = await axios.post(
-        `${API_BASE}/api/v1/slider/upload-images`, 
+        `${API_BASE}/api/v1/slider/upload-images`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, 
           },
           withCredentials: true,
         }
       );
 
       if (response.data.success) {
-        return response.data.images; // Array of Cloudinary URLs
+        return response.data.images;
       } else {
         throw new Error(response.data.message || "Upload failed");
       }
     } catch (error) {
       console.error("Slider upload error:", error);
+      if (error.response?.status === 401) {
+        throw new Error("Authentication failed. Please login again.");
+      }
       throw error;
     }
   };
@@ -71,12 +80,17 @@ const AddHomeSliderModal = () => {
   // Remove image from Cloudinary via backend
   const removeFromCloudinary = async (imageUrl) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+
       const response = await axios.delete(
         `${API_BASE}/api/v1/slider/remove-image`,
         {
           params: { img: imageUrl },
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
           withCredentials: true,
         }
@@ -93,16 +107,28 @@ const AddHomeSliderModal = () => {
   // Create slider in database
   const createSliderInDB = async (sliderData) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+
       const response = await fetch(`${API_BASE}/api/v1/slider/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(sliderData),
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
       if (data.success) {
         return data.slider;
       }
@@ -116,16 +142,28 @@ const AddHomeSliderModal = () => {
   // Update slider
   const updateSliderInDB = async (sliderId, updateData) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+
       const response = await fetch(`${API_BASE}/api/v1/slider/${sliderId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(updateData),
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
       if (data.success) {
         return data.slider;
       }
@@ -139,14 +177,26 @@ const AddHomeSliderModal = () => {
   // Delete slider from database
   const deleteSliderFromDB = async (sliderId) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+
       const response = await fetch(`${API_BASE}/api/v1/slider/${sliderId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
       return data.success;
     } catch (error) {
       console.error("Delete slider error:", error);
@@ -167,11 +217,15 @@ const AddHomeSliderModal = () => {
     ];
     const validFiles = Array.from(files).filter((file) => {
       if (!validTypes.includes(file.type)) {
-        alert(`Invalid file type: ${file.name}. Please upload images only.`);
+        toast.error(
+          `Invalid file type: ${file.name}. Please upload images only.`
+        );
         return false;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert(`File too large: ${file.name}. Please upload files under 5MB.`);
+        toast.error(
+          `File too large: ${file.name}. Please upload files under 5MB.`
+        );
         return false;
       }
       return true;
@@ -203,12 +257,12 @@ const AddHomeSliderModal = () => {
     ];
 
     if (!validTypes.includes(file.type)) {
-      alert("Invalid file type. Please upload images only.");
+      toast.error("Invalid file type. Please upload images only.");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("File too large. Please upload files under 5MB.");
+      toast.error("File too large. Please upload files under 5MB.");
       return;
     }
 
@@ -257,16 +311,20 @@ const AddHomeSliderModal = () => {
 
   const handlePublish = async () => {
     if (previewImages.length === 0) {
-      alert("Please upload at least one image.");
+      toast.error("Please upload at least one image.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Authentication required. Please login again.");
       return;
     }
 
     setLoading(true);
     try {
-      // Upload images to Cloudinary
       const cloudinaryUrls = await uploadToCloudinary(previewImages);
 
-      // Create sliders in database
       const createdSliders = [];
       for (let i = 0; i < cloudinaryUrls.length; i++) {
         const sliderData = {
@@ -279,10 +337,8 @@ const AddHomeSliderModal = () => {
         createdSliders.push(created);
       }
 
-      // Update state
       setPublishedSliders((prev) => [...prev, ...createdSliders]);
 
-      // Clean up
       previewImages.forEach((img) => {
         if (img.url && img.url.startsWith("blob:")) {
           URL.revokeObjectURL(img.url);
@@ -291,10 +347,21 @@ const AddHomeSliderModal = () => {
       setPreviewImages([]);
       setShowAddModal(false);
 
-      alert(`${createdSliders.length} slider(s) published successfully!`);
+      toast.success(
+        `${createdSliders.length} slider(s) published successfully!`
+      );
     } catch (error) {
       console.error("Publish error:", error);
-      alert("Failed to publish sliders. Please try again.");
+      if (
+        error.message.includes("Authentication failed") ||
+        error.message.includes("authentication token")
+      ) {
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error(
+          error.message || "Failed to publish sliders. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -312,21 +379,26 @@ const AddHomeSliderModal = () => {
     setDeleteConfirmOpen(false);
 
     try {
-      // Delete from database (backend will handle Cloudinary deletion)
       const success = await deleteSliderFromDB(sliderToDelete._id);
 
       if (success) {
-        // Update state
         setPublishedSliders((prev) =>
           prev.filter((s) => s._id !== sliderToDelete._id)
         );
-        alert("Slider deleted successfully!");
+        toast.success("Slider deleted successfully!");
       } else {
-        alert("Failed to delete slider. Please try again.");
+        toast.error("Failed to delete slider. Please try again.");
       }
     } catch (error) {
       console.error("Delete error:", error);
-      alert("Failed to delete slider. Please try again.");
+      if (
+        error.message.includes("Authentication failed") ||
+        error.message.includes("authentication token")
+      ) {
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error("Failed to delete slider. Please try again.");
+      }
     } finally {
       setDeletingSliders((prev) => {
         const newSet = new Set(prev);
@@ -355,17 +427,12 @@ const AddHomeSliderModal = () => {
     try {
       let newImageUrl = editingSlider.imageUrl;
 
-      // If new image is selected, upload it and delete old one
       if (newEditImage) {
-        // Upload new image
         const uploadedUrls = await uploadToCloudinary([newEditImage.file]);
         newImageUrl = uploadedUrls[0];
-
-        // Delete old image from Cloudinary
         await removeFromCloudinary(editingSlider.imageUrl);
       }
 
-      // Update slider with new image URL
       const updatedSlider = await updateSliderInDB(editingSlider._id, {
         imageUrl: newImageUrl,
         type: editingSlider.type,
@@ -376,7 +443,6 @@ const AddHomeSliderModal = () => {
         prev.map((s) => (s._id === updatedSlider._id ? updatedSlider : s))
       );
 
-      // Clean up
       if (newEditImage && newEditImage.url.startsWith("blob:")) {
         URL.revokeObjectURL(newEditImage.url);
       }
@@ -384,10 +450,17 @@ const AddHomeSliderModal = () => {
       setShowEditModal(false);
       setEditingSlider(null);
       setNewEditImage(null);
-      alert("Slider updated successfully!");
+      toast.success("Slider updated successfully!");
     } catch (error) {
       console.error("Update error:", error);
-      alert("Failed to update slider. Please try again.");
+      if (
+        error.message.includes("Authentication failed") ||
+        error.message.includes("authentication token")
+      ) {
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error("Failed to update slider. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -423,6 +496,7 @@ const AddHomeSliderModal = () => {
           Add Home Slider
         </button>
       </div>
+
       {/* Published Sliders - Wide Format */}
       <div className="space-y-4 sm:space-y-6 mb-8">
         {publishedSliders.map((slider, index) => (
@@ -485,6 +559,7 @@ const AddHomeSliderModal = () => {
           </div>
         ))}
       </div>
+
       {publishedSliders.length === 0 && (
         <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
           <FaRegImages className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
