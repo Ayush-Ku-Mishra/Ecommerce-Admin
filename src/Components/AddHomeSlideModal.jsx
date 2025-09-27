@@ -38,22 +38,36 @@ const AddHomeSliderModal = () => {
     }
   };
 
-  // Upload images to Cloudinary - FIXED to match working product upload
+  // Upload images to Cloudinary - Try both auth methods
   const uploadToCloudinary = async (files) => {
     try {
+      // Debug: Check both cookies and token
+      console.log("All cookies:", document.cookie);
+      const token = localStorage.getItem("token");
+      console.log("Token:", token);
+      console.log("API_BASE:", API_BASE);
+
       const formData = new FormData();
       files.forEach((file) => {
         formData.append("images", file.file || file);
       });
 
+      // Try with both authentication methods
+      const headers = {
+        "Content-Type": "multipart/form-data",
+      };
+
+      // Add token if available
+      if (token && token !== "null" && token !== "undefined") {
+        headers.Authorization = `Bearer ${token.replace(/"/g, "")}`;
+      }
+
       const response = await axios.post(
         `${API_BASE}/api/v1/slider/upload-images`,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true, // Only use cookie-based auth like product upload
+          headers,
+          withCredentials: true, // Also send cookies
         }
       );
 
@@ -64,6 +78,10 @@ const AddHomeSliderModal = () => {
       }
     } catch (error) {
       console.error("Slider upload error:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      console.error("Request headers:", error.config?.headers);
+
       if (error.response?.status === 401) {
         throw new Error("Authentication failed. Please login again.");
       }
