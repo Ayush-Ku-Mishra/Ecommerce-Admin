@@ -10,7 +10,6 @@ import AddSize from "./Components/AddSize";
 import AddWeight from "./Components/AddWeight";
 import ManageLogo from "./Components/ManageLogo";
 import Orders from "./Components/Orders";
-import HomeBannersList from "./Components/HomeBannersList";
 import AddHomeSlideModal from "./Components/AddHomeSlideModal";
 import CategoryList from "./Components/CategoryList";
 import AddCategory from "./Components/AddCategory";
@@ -48,7 +47,6 @@ const router = createBrowserRouter([
           { path: "add-product-Sizechart", element: <AddSizechart /> },
           { path: "manage-logo", element: <ManageLogo /> },
           { path: "orders", element: <Orders /> },
-          { path: "home-banners-list", element: <HomeBannersList /> },
           { path: "add-home-banner-slide", element: <AddHomeSlideModal /> },
           { path: "category-list", element: <CategoryList /> },
           { path: "add-category", element: <AddCategory /> },
@@ -88,7 +86,7 @@ function App() {
             borderRadius: "15px",
             background: "#333",
             color: "#fff",
-            marginBottom: "60px", 
+            marginBottom: "60px",
           },
         }}
       />

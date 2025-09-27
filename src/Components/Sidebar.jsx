@@ -16,7 +16,6 @@ const menuConfig = [
     icon: <BsCardImage size={16} />,
     path: "/home-slides",
     children: [
-      { label: "Home Banners List", path: "/home-banners-list" },
       { label: "Add Home Banner Slide", path: "/add-home-banner-slide" },
     ],
   },
@@ -45,15 +44,6 @@ const menuConfig = [
   },
   { label: "Users", icon: <FiUsers size={16} />, path: "/users" },
   { label: "Orders", icon: <FaClipboardList size={16} />, path: "/orders" },
-  {
-    label: "Banners",
-    icon: <MdOutlineImage size={16} />,
-    path: "/banners",
-    children: [
-      { label: "Home Banner List", path: "/home-banner-list" },
-      { label: "Add Home Banner", path: "/add-home-banner" },
-    ],
-  },
   {
     label: "Manage Logo",
     icon: <MdOutlineManageAccounts size={16} />,
