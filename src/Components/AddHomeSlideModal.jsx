@@ -50,6 +50,7 @@ const AddHomeSliderModal = () => {
         body: formData,
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          withCredentials: true,
         },
       });
 
@@ -75,6 +76,7 @@ const AddHomeSliderModal = () => {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            withCredentials: true,
           },
         }
       );
