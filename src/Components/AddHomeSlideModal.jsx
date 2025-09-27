@@ -38,14 +38,9 @@ const AddHomeSliderModal = () => {
     }
   };
 
-  // Upload images to Cloudinary - FIXED
+  // Upload images to Cloudinary - FIXED to match working product upload
   const uploadToCloudinary = async (files) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No authentication token found. Please login again.");
-      }
-
       const formData = new FormData();
       files.forEach((file) => {
         formData.append("images", file.file || file);
@@ -57,9 +52,8 @@ const AddHomeSliderModal = () => {
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`, 
           },
-          withCredentials: true,
+          withCredentials: true, // Only use cookie-based auth like product upload
         }
       );
 
@@ -73,26 +67,21 @@ const AddHomeSliderModal = () => {
       if (error.response?.status === 401) {
         throw new Error("Authentication failed. Please login again.");
       }
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
       throw error;
     }
   };
 
-  // Remove image from Cloudinary via backend
+  // Remove image from Cloudinary via backend - FIXED to match working product delete
   const removeFromCloudinary = async (imageUrl) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No authentication token found. Please login again.");
-      }
-
       const response = await axios.delete(
         `${API_BASE}/api/v1/slider/remove-image`,
         {
           params: { img: imageUrl },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
+          withCredentials: true, // Only use cookie-based auth like product delete
         }
       );
 
@@ -108,7 +97,9 @@ const AddHomeSliderModal = () => {
   const createSliderInDB = async (sliderData) => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
+      console.log("Create slider token:", token); // Debug log
+
+      if (!token || token === "null" || token === "undefined") {
         throw new Error("No authentication token found. Please login again.");
       }
 
@@ -116,7 +107,7 @@ const AddHomeSliderModal = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token.replace(/"/g, "")}`, // Remove any quotes
         },
         body: JSON.stringify(sliderData),
       });
