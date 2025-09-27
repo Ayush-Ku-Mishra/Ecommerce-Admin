@@ -3,6 +3,7 @@ import { IoClose, IoCloudUpload, IoAdd, IoTrash, IoEye } from "react-icons/io5";
 import { FaRegImages, FaEdit } from "react-icons/fa";
 import CircularProgress from "@mui/material/CircularProgress";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 const AddHomeSliderModal = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -39,50 +40,51 @@ const AddHomeSliderModal = () => {
 
   // Upload images to Cloudinary
   const uploadToCloudinary = async (files) => {
-    const formData = new FormData();
-    files.forEach((file) => {
-      formData.append("images", file.file || file);
-    });
-
     try {
-      const response = await fetch(`${API_BASE}/api/v1/slider/upload-images`, {
-        method: "POST",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          withCredentials: true,
-        },
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append("images", file.file || file);
       });
 
-      const data = await response.json();
-      if (data.success) {
-        return data.images;
+      const response = await axios.post(
+        `${API_BASE}/api/v1/slider/upload-images`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          withCredentials: true, // <-- this is correct usage
+        }
+      );
+
+      if (response.data.success) {
+        return response.data.images;
+      } else {
+        throw new Error(response.data.message || "Upload failed");
       }
-      throw new Error(data.message || "Upload failed");
     } catch (error) {
       console.error("Cloudinary upload error:", error);
       throw error;
     }
   };
 
-  // Remove image from Cloudinary
+  // Remove image from Cloudinary via backend
   const removeFromCloudinary = async (imageUrl) => {
     try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/slider/remove-image?img=${encodeURIComponent(
-          imageUrl
-        )}`,
+      const response = await axios.delete(
+        `${API_BASE}/api/v1/slider/remove-image`,
         {
-          method: "DELETE",
+          params: { img: imageUrl },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            withCredentials: true,
           },
+          withCredentials: true,
         }
       );
 
-      const data = await response.json();
-      return data.success;
+      if (response.data.success) return true;
+      else throw new Error("Failed to remove image");
     } catch (error) {
       console.error("Cloudinary remove error:", error);
       return false;
