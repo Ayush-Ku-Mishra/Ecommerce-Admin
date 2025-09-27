@@ -47,24 +47,23 @@ const AddHomeSliderModal = () => {
       });
 
       const response = await axios.post(
-        `${API_BASE}/api/v1/slider/create`,
-        formData, 
+        `${API_BASE}/api/v1/slider/upload-images`, 
+        formData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data", 
+            "Content-Type": "multipart/form-data",
           },
           withCredentials: true,
         }
       );
 
       if (response.data.success) {
-        return response.data.images;
+        return response.data.images; // Array of Cloudinary URLs
       } else {
         throw new Error(response.data.message || "Upload failed");
       }
     } catch (error) {
-      console.error("Cloudinary upload error:", error);
+      console.error("Slider upload error:", error);
       throw error;
     }
   };
