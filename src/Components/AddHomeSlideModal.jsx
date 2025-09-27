@@ -38,51 +38,40 @@ const AddHomeSliderModal = () => {
     }
   };
 
-  // Upload images to Cloudinary - Try both auth methods
+  // Upload images to Cloudinary - Using cookie auth like product upload
   const uploadToCloudinary = async (files) => {
     try {
-      // Debug: Check both cookies and token
-      console.log("All cookies:", document.cookie);
-      const token = localStorage.getItem("token");
-      console.log("Token:", token);
-      console.log("API_BASE:", API_BASE);
-
       const formData = new FormData();
       files.forEach((file) => {
         formData.append("images", file.file || file);
       });
 
-      // Try with both authentication methods
-      const headers = {
-        "Content-Type": "multipart/form-data",
-      };
-
-      // Add token if available
-      if (token && token !== "null" && token !== "undefined") {
-        headers.Authorization = `Bearer ${token.replace(/"/g, "")}`;
-      }
-
       const response = await axios.post(
         `${API_BASE}/api/v1/slider/upload-images`,
         formData,
         {
-          headers,
-          withCredentials: true, // Also send cookies
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
         }
       );
 
-      if (response.data.success) {
+      if (
+        response.data.success &&
+        response.data.images &&
+        response.data.images.length > 0
+      ) {
         return response.data.images;
       } else {
-        throw new Error(response.data.message || "Upload failed");
+        throw new Error("Image upload failed");
       }
     } catch (error) {
       console.error("Slider upload error:", error);
       console.error("Error response:", error.response?.data);
       console.error("Error status:", error.response?.status);
-      console.error("Request headers:", error.config?.headers);
 
-      if (error.response?.status === 401) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
         throw new Error("Authentication failed. Please login again.");
       }
       if (error.response?.data?.message) {
@@ -92,123 +81,100 @@ const AddHomeSliderModal = () => {
     }
   };
 
-  // Remove image from Cloudinary via backend - FIXED to match working product delete
+  // Remove image from Cloudinary - Using cookie auth like product
   const removeFromCloudinary = async (imageUrl) => {
     try {
       const response = await axios.delete(
         `${API_BASE}/api/v1/slider/remove-image`,
         {
           params: { img: imageUrl },
-          withCredentials: true, // Only use cookie-based auth like product delete
+          withCredentials: true,
         }
       );
 
-      if (response.data.success) return true;
-      else throw new Error("Failed to remove image");
+      return response.data.success;
     } catch (error) {
       console.error("Cloudinary remove error:", error);
       return false;
     }
   };
 
-  // Create slider in database
+  // Create slider in database - Using cookie auth like product
   const createSliderInDB = async (sliderData) => {
     try {
-      const token = localStorage.getItem("token");
-      console.log("Create slider token:", token); // Debug log
+      const response = await axios.post(
+        `${API_BASE}/api/v1/slider/create`,
+        sliderData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
-      if (!token || token === "null" || token === "undefined") {
-        throw new Error("No authentication token found. Please login again.");
+      if (response.data.success) {
+        return response.data.slider;
       }
-
-      const response = await fetch(`${API_BASE}/api/v1/slider/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token.replace(/"/g, "")}`, // Remove any quotes
-        },
-        body: JSON.stringify(sliderData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      if (data.success) {
-        return data.slider;
-      }
-      throw new Error(data.message || "Create failed");
+      throw new Error(response.data.message || "Create failed");
     } catch (error) {
       console.error("Create slider error:", error);
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error("Authentication failed. Please login again.");
+      }
+
       throw error;
     }
   };
 
-  // Update slider
+  // Update slider - Using cookie auth like product
   const updateSliderInDB = async (sliderId, updateData) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No authentication token found. Please login again.");
+      const response = await axios.put(
+        `${API_BASE}/api/v1/slider/${sliderId}`,
+        updateData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        return response.data.slider;
       }
-
-      const response = await fetch(`${API_BASE}/api/v1/slider/${sliderId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      if (data.success) {
-        return data.slider;
-      }
-      throw new Error(data.message || "Update failed");
+      throw new Error(response.data.message || "Update failed");
     } catch (error) {
       console.error("Update slider error:", error);
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error("Authentication failed. Please login again.");
+      }
+
       throw error;
     }
   };
 
-  // Delete slider from database
+  // Delete slider from database - Using cookie auth like product
   const deleteSliderFromDB = async (sliderId) => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No authentication token found. Please login again.");
-      }
+      const response = await axios.delete(
+        `${API_BASE}/api/v1/slider/${sliderId}`,
+        {
+          withCredentials: true,
+        }
+      );
 
-      const response = await fetch(`${API_BASE}/api/v1/slider/${sliderId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      return data.success;
+      return response.data.success;
     } catch (error) {
       console.error("Delete slider error:", error);
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error("Authentication failed. Please login again.");
+      }
+
       return false;
     }
   };
@@ -324,16 +290,12 @@ const AddHomeSliderModal = () => {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Authentication required. Please login again.");
-      return;
-    }
-
     setLoading(true);
     try {
+      // Upload images to cloudinary first
       const cloudinaryUrls = await uploadToCloudinary(previewImages);
 
+      // Create sliders in database
       const createdSliders = [];
       for (let i = 0; i < cloudinaryUrls.length; i++) {
         const sliderData = {
@@ -346,13 +308,16 @@ const AddHomeSliderModal = () => {
         createdSliders.push(created);
       }
 
+      // Update UI
       setPublishedSliders((prev) => [...prev, ...createdSliders]);
 
+      // Cleanup blob URLs
       previewImages.forEach((img) => {
         if (img.url && img.url.startsWith("blob:")) {
           URL.revokeObjectURL(img.url);
         }
       });
+
       setPreviewImages([]);
       setShowAddModal(false);
 
@@ -361,9 +326,11 @@ const AddHomeSliderModal = () => {
       );
     } catch (error) {
       console.error("Publish error:", error);
+
       if (
         error.message.includes("Authentication failed") ||
-        error.message.includes("authentication token")
+        error.message.includes("authentication token") ||
+        error.message.includes("Authentication required")
       ) {
         toast.error("Session expired. Please login again.");
       } else {
@@ -580,6 +547,7 @@ const AddHomeSliderModal = () => {
           </p>
         </div>
       )}
+
       {/* Add Modal */}
       {showAddModal && (
         <>
@@ -734,6 +702,7 @@ const AddHomeSliderModal = () => {
           </div>
         </>
       )}
+
       {/* Edit Modal */}
       {showEditModal && editingSlider && (
         <>
@@ -760,7 +729,7 @@ const AddHomeSliderModal = () => {
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <IoClose className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500" />   
+                  <IoClose className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500" />
                 </button>
               </div>
 
@@ -832,7 +801,7 @@ const AddHomeSliderModal = () => {
                         }}
                         className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700 transition-colors shadow-lg"
                       >
-                        <IoClose className="w-5 h-5" /> 
+                        <IoClose className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
@@ -874,6 +843,7 @@ const AddHomeSliderModal = () => {
           </div>
         </>
       )}
+
       {/* Delete Confirmation Modal */}
       {deleteConfirmOpen && sliderToDelete && (
         <>
@@ -885,7 +855,7 @@ const AddHomeSliderModal = () => {
             <div className="bg-white rounded-2xl w-full max-w-md p-4 sm:p-6">
               <div className="text-center">
                 <div className="mx-auto flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100 mb-3 sm:mb-4">
-                  <IoTrash className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />   
+                  <IoTrash className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                 </div>
                 <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                   Delete Slider
@@ -914,6 +884,7 @@ const AddHomeSliderModal = () => {
           </div>
         </>
       )}
+
       {/* View Image Modal */}
       {viewImageModal && (
         <>
