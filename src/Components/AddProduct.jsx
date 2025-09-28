@@ -1061,7 +1061,6 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
                     name="price"
                     value={formData.price}
                     onChange={handleInputChange}
-                    onBlur={handlePriceBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                     step="0.01"
@@ -1081,7 +1080,6 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
                     name="oldPrice"
                     value={formData.oldPrice}
                     onChange={handleInputChange}
-                    onBlur={handlePriceBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                     step="0.01"

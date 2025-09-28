@@ -31,12 +31,17 @@ const Dashboard = () => {
         : "https://myecommerce-backend-p8ca.onrender.com/api/v1";
 
       try {
+        const headers = {};
+        const token = localStorage.getItem("token");
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
         // Fetch users count
         try {
           const usersRes = await fetch(`${API_BASE_URL}/user/count`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+            credentials: "include",
+            headers: headers,
           });
 
           if (!usersRes.ok) throw new Error("Failed to fetch users count");
@@ -50,7 +55,11 @@ const Dashboard = () => {
         // Fetch categories
         try {
           const categoriesRes = await fetch(
-            `${API_BASE_URL}/category/get-categories`
+            `${API_BASE_URL}/category/get-categories`,
+            {
+              credentials: "include",
+              headers: headers,
+            }
           );
           if (!categoriesRes.ok) throw new Error("Failed to fetch categories");
           const categoriesData = await categoriesRes.json();
@@ -65,7 +74,11 @@ const Dashboard = () => {
         // Fetch products count
         try {
           const productsRes = await fetch(
-            `${API_BASE_URL}/product/getProductsCount`
+            `${API_BASE_URL}/product/getProductsCount`,
+            {
+              credentials: "include",
+              headers: headers,
+            }
           );
           if (!productsRes.ok)
             throw new Error("Failed to fetch products count");
@@ -76,11 +89,13 @@ const Dashboard = () => {
           setTotalProducts(0);
         }
 
+        // Fetch orders count
         try {
           const ordersRes = await fetch(
             `${API_BASE_URL}/payment/orders-count`,
             {
               credentials: "include",
+              headers: headers,
             }
           );
           if (!ordersRes.ok) throw new Error("Failed to fetch orders count");

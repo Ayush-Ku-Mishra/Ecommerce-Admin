@@ -25,9 +25,14 @@ const AppWrapper = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/me`,
-          { withCredentials: true }
+          {
+            withCredentials: true, // For cookies
+            headers: headers, // For token
+          }
         );
         setUser(res.data.user);
         setIsAuthenticated(true);
