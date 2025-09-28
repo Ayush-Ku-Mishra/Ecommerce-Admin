@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { IoClose, IoStar, IoStarOutline, IoCloudUpload } from "react-icons/io5";
 import { FaRegImages } from "react-icons/fa";
-import  toast from "react-hot-toast";
+import toast from "react-hot-toast";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -64,6 +64,24 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
   const [uploadingImages, setUploadingImages] = useState({});
   const [removingImages, setRemovingImages] = useState({});
   const [selectedChartId, setSelectedChartId] = useState(null);
+
+  const formatPrice = (value) => {
+    // Remove any non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, "");
+
+    // Ensure only one decimal point
+    const parts = cleanValue.split(".");
+    if (parts.length > 2) {
+      return parts[0] + "." + parts.slice(1).join("");
+    }
+
+    // Limit to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+      return parts[0] + "." + parts[1].substring(0, 2);
+    }
+
+    return cleanValue;
+  };
 
   const navigate = useNavigate();
   const isEditMode = !!editProductId;
@@ -132,13 +150,15 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/product/getProduct/${editProductId}`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/product/getProduct/${editProductId}`,
         { withCredentials: true }
       );
 
       if (response.data.success) {
         const product = response.data.product;
-        
+
         // Populate form data
         setFormData({
           name: product.name || "",
@@ -162,12 +182,24 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
         setRating(product.rating || 1);
 
         // Handle product details
-        if (product.productDetails && typeof product.productDetails === 'object') {
-          const detailsArray = Object.entries(product.productDetails).map(([key, value]) => ({
-            label: key,
-            value: value
-          }));
-          setDetails(detailsArray.length > 0 ? detailsArray : [{ label: "", value: "" }, { label: "", value: "" }]);
+        if (
+          product.productDetails &&
+          typeof product.productDetails === "object"
+        ) {
+          const detailsArray = Object.entries(product.productDetails).map(
+            ([key, value]) => ({
+              label: key,
+              value: value,
+            })
+          );
+          setDetails(
+            detailsArray.length > 0
+              ? detailsArray
+              : [
+                  { label: "", value: "" },
+                  { label: "", value: "" },
+                ]
+          );
         }
 
         // Handle images
@@ -183,22 +215,25 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
 
         // Handle sizes
         if (product.dressSizes?.length) {
-          setDressSizes(product.dressSizes.map(size => ({
-            size: typeof size === 'object' ? size.size : size,
-            stock: typeof size === 'object' ? size.stock : ""
-          })));
+          setDressSizes(
+            product.dressSizes.map((size) => ({
+              size: typeof size === "object" ? size.size : size,
+              stock: typeof size === "object" ? size.stock : "",
+            }))
+          );
         }
 
         if (product.shoesSizes?.length) {
-          setShoesSizes(product.shoesSizes.map(size => ({
-            size: typeof size === 'object' ? size.size : size,
-            stock: typeof size === 'object' ? size.stock : ""
-          })));
+          setShoesSizes(
+            product.shoesSizes.map((size) => ({
+              size: typeof size === "object" ? size.size : size,
+              stock: typeof size === "object" ? size.stock : "",
+            }))
+          );
         }
 
         setFreeSize(product.freeSize || "no");
         setSelectedChartId(product.sizeChartId || null);
-
       } else {
         toast.error("Failed to fetch product details for editing");
       }
@@ -434,7 +469,9 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
   const updateProduct = async (productId, productData) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/product/update/${productId}`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/v1/product/update/${productId}`,
         productData,
         {
           withCredentials: true,
@@ -460,10 +497,19 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+
+    if (name === "price" || name === "oldPrice") {
+      const formattedValue = formatPrice(value);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: formattedValue,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
   const handleDetailsChange = (index, key, val) => {
@@ -636,7 +682,7 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
       toast.error("Please select a product third level category.");
       return;
     }
-    
+
     if (
       !formData.price ||
       isNaN(formData.price) ||
@@ -732,8 +778,8 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
         productDetails: productDetails,
         images: uploadedImageUrls,
         brand: formData.brand.trim(),
-        price: Number(formData.price),
-        oldPrice: Number(formData.oldPrice),
+        price: parseFloat(parseFloat(formData.price).toFixed(2)),
+        oldPrice: parseFloat(parseFloat(formData.oldPrice).toFixed(2)),
         categoryName: selectedCategory?.name || "",
         categoryId: formData.category,
         subCatId: formData.subCategory,
@@ -751,7 +797,10 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
         freeSize: freeSize,
         weight: formData.weight ? [formData.weight] : [],
         color: "default",
-        sizeChartId: selectedChartId && selectedChartId.trim() !== "" ? selectedChartId : null,
+        sizeChartId:
+          selectedChartId && selectedChartId.trim() !== ""
+            ? selectedChartId
+            : null,
       };
 
       // Step 5: Create or update product
@@ -779,11 +828,21 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
         // Close the modal after reset
         onClose();
       } else {
-        toast.error(response.message || `Failed to ${isEditMode ? 'update' : 'create'} product`);
+        toast.error(
+          response.message ||
+            `Failed to ${isEditMode ? "update" : "create"} product`
+        );
       }
     } catch (error) {
-      console.error(`Error ${isEditMode ? 'updating' : 'creating'} product:`, error);
-      toast.error(`Failed to ${isEditMode ? 'update' : 'create'} product. Please try again.`);
+      console.error(
+        `Error ${isEditMode ? "updating" : "creating"} product:`,
+        error
+      );
+      toast.error(
+        `Failed to ${
+          isEditMode ? "update" : "create"
+        } product. Please try again.`
+      );
     } finally {
       setLoading(false);
     }
@@ -822,7 +881,9 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
       >
         <div className="text-center">
           <CircularProgress color="inherit" />
-          <p className="mt-2">{isEditMode ? 'Updating product...' : 'Creating product...'}</p>
+          <p className="mt-2">
+            {isEditMode ? "Updating product..." : "Creating product..."}
+          </p>
         </div>
       </Backdrop>
 
@@ -834,7 +895,7 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
         {/* Header */}
         <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? 'Edit Product' : 'Add Product'}
+            {isEditMode ? "Edit Product" : "Add Product"}
           </h1>
           <button
             onClick={onClose}
@@ -1000,6 +1061,7 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
                     name="price"
                     value={formData.price}
                     onChange={handleInputChange}
+                    onBlur={handlePriceBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                     step="0.01"
@@ -1019,6 +1081,7 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
                     name="oldPrice"
                     value={formData.oldPrice}
                     onChange={handleInputChange}
+                    onBlur={handlePriceBlur}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="0.00"
                     step="0.01"
@@ -1399,10 +1462,9 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
                   disabled={loading || Object.keys(uploadingImages).length > 0}
                 >
                   <IoCloudUpload className="w-5 h-5" />
-                  {loading 
-                    ? `${isEditMode ? 'Updating' : 'Creating'} Product...` 
-                    : `${isEditMode ? 'UPDATE' : 'PUBLISH'} AND VIEW`
-                  }
+                  {loading
+                    ? `${isEditMode ? "Updating" : "Creating"} Product...`
+                    : `${isEditMode ? "UPDATE" : "PUBLISH"} AND VIEW`}
                 </button>
               </div>
             </div>
