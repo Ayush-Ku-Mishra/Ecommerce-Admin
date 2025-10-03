@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { IoClose, IoStar, IoStarOutline, IoCloudUpload } from "react-icons/io5";
 import { FaRegImages } from "react-icons/fa";
 import toast from "react-hot-toast";
-import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { CircularProgress, Backdrop } from "@mui/material";

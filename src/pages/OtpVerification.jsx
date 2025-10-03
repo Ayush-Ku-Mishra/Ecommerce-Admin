@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { MdArrowBack, MdSms, MdEmail } from "react-icons/md";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import { Context } from "../main";
 
 const OtpVerification = ({

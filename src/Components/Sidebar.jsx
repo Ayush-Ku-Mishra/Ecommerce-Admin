@@ -52,6 +52,7 @@ const menuConfig = [
       { label: "Product List", path: "/product-list" },
       { label: "Product Upload", path: "/product-upload" },
       { label: "Add Product Sizechart", path: "/add-product-Sizechart" },
+      { label: "Product Analytics", path: "/product-analytics" },
     ],
   },
   { label: "Users", icon: <FiUsers size={16} />, path: "/users" },

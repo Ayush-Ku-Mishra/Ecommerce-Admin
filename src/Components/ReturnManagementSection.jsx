@@ -35,7 +35,7 @@ import {
   Grid,
 } from "@mui/material";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import {
   Chart as ChartJS,
   CategoryScale,

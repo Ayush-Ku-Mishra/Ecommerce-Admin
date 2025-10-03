@@ -21,6 +21,7 @@ import ProtectedRoute from "./Components/ProtectedRoute";
 import AddSizechart from "./Components/AddSizechart";
 import logo from "./assets/PickoraFavicon.png";
 import ReturnManagementSection from "./Components/ReturnManagementSection";
+import ProductAnalyticsDashboard from "./Components/ProductAnalyticsDashboard";
 
 const router = createBrowserRouter([
   {
@@ -51,6 +52,7 @@ const router = createBrowserRouter([
           { path: "profile", element: <ProfilePage /> },
           { path: "return-requests", element: <ReturnManagementSection /> },
           { path: "return-analytics", element: <ReturnManagementSection initialTab={1} /> },
+          { path: "/product-analytics", element: <ProductAnalyticsDashboard /> },
         ],
       },
     ],

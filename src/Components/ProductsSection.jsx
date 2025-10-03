@@ -15,7 +15,7 @@ import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import TablePagination from "@mui/material/TablePagination";
 import AddProduct from "./AddProduct";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import {
   Dialog,
   DialogActions,

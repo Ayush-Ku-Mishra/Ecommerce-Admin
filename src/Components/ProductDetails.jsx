@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 import Rating from "@mui/material/Rating";
 import { Dialog, CircularProgress } from "@mui/material";
 import { Swiper, SwiperSlide } from "swiper/react";

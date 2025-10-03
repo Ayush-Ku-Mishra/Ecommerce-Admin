@@ -6,7 +6,7 @@ import axios from "axios";
 import { useState, useEffect, createContext } from "react";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
-import { toast } from "react-toastify";
+import  toast  from "react-hot-toast";
 
 export const Context = createContext({
   isAuthenticated: false,
