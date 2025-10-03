@@ -249,7 +249,7 @@ const AddProduct = ({ isOpen, onClose, onProductAdded, editProductId }) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/category/get-categories`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/category/get-categoriesForAdmin`,
         { withCredentials: true }
       );
 

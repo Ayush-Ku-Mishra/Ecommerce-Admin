@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
-const AdminOrders = () => {
+const RecentOrders = () => {
   const [ordersData, setOrdersData] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [expandedRow, setExpandedRow] = useState(null);
@@ -694,4 +694,4 @@ const AdminOrders = () => {
   );
 };
 
-export default AdminOrders;
+export default RecentOrders;

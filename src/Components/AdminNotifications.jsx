@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { IoMdNotificationsOutline } from "react-icons/io";
-import { FaBell, FaShoppingCart, FaCheck } from "react-icons/fa";
+import {
+  FaBell,
+  FaShoppingCart,
+  FaCheck,
+  FaExchangeAlt,
+  FaBox,
+  FaTimes,
+} from "react-icons/fa";
 import { MdPayment } from "react-icons/md";
 import { MdDeleteForever } from "react-icons/md";
 import axios from "axios";
@@ -21,14 +28,22 @@ const AdminNotifications = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
+      console.log(
+        "Fetching notifications from:",
+        `${API_BASE_URL}/api/v1/notifications/all`
+      );
       const response = await axios.get(
         `${API_BASE_URL}/api/v1/notifications/all`,
         { withCredentials: true }
       );
 
+      console.log("Notification response:", response.data);
+
       if (response.data.success) {
         setNotifications(response.data.notifications);
         setUnreadCount(response.data.unreadCount);
+        console.log("Notifications set:", response.data.notifications.length);
+        console.log("Unread count:", response.data.unreadCount);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -76,7 +91,7 @@ const AdminNotifications = () => {
     }
   };
 
-  // Delete notification - THIS WAS MISSING!
+  // Delete notification
   const deleteNotification = async (notificationId, e) => {
     e.stopPropagation();
     try {
@@ -110,7 +125,13 @@ const AdminNotifications = () => {
       markAsRead(notification._id);
     }
     setIsOpen(false);
-    navigate("/orders");
+
+    // Navigate based on notification type
+    if (notification.type.includes("return") && notification.returnId) {
+      navigate(`/return-requests?id=${notification.returnId}`);
+    } else {
+      navigate("/orders");
+    }
   };
 
   // Close dropdown when clicking outside
@@ -146,6 +167,12 @@ const AdminNotifications = () => {
         ) : (
           <MdPayment className="text-green-500" />
         );
+      case "new_return":
+        return <FaExchangeAlt className="text-indigo-500" />;
+      case "return_updated":
+        return <FaBox className="text-purple-500" />;
+      case "return_cancelled":
+        return <FaTimes className="text-red-500" />;
       default:
         return <FaBell className="text-blue-500" />;
     }
@@ -207,13 +234,23 @@ const AdminNotifications = () => {
           className="fixed inset-0 z-[9999] animate-in fade-in duration-200"
           style={{ pointerEvents: "none" }}
         >
-          {/* Position the dropdown */}
+          {/* Mobile overlay */}
+          <div className="fixed inset-0 bg-black/30 sm:hidden"></div>
+          
+          {/* Position the dropdown - UPDATED for larger size on laptop and full screen on mobile */}
           <div
-            className="absolute top-12 right-2 sm:right-4 w-[95vw] sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 max-h-[85vh] sm:max-h-96 overflow-hidden animate-in slide-in-from-top-2 duration-300"
+            className="absolute sm:right-4 bg-white shadow-xl border border-gray-200 animate-in slide-in-from-top-2 duration-300"
             style={{
               pointerEvents: "auto",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              maxWidth: "calc(100vw - 16px)",
+              // Mobile: full screen with small margins
+              top: window.innerWidth < 640 ? "0" : "12px",
+              right: window.innerWidth < 640 ? "0" : "16px",
+              left: window.innerWidth < 640 ? "0" : "auto",
+              bottom: window.innerWidth < 640 ? "0" : "auto",
+              width: window.innerWidth < 640 ? "100%" : "450px", // Wider on laptop (was 96px/384px)
+              maxHeight: window.innerWidth < 640 ? "100%" : "85vh",
+              borderRadius: window.innerWidth < 640 ? "0" : "0.5rem",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -228,19 +265,34 @@ const AdminNotifications = () => {
                 )}
               </h3>
 
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                >
-                  <FaCheck size={12} />
-                  Mark all read
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <FaCheck size={12} />
+                    Mark all read
+                  </button>
+                )}
+                
+                {/* Close button for mobile */}
+                {window.innerWidth < 640 && (
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="ml-2 p-1 rounded-full hover:bg-gray-100"
+                  >
+                    <FaTimes className="text-gray-500" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-72 sm:max-h-80 overflow-y-auto">
+            <div className="overflow-y-auto" style={{ 
+              height: window.innerWidth < 640 ? "calc(100% - 130px)" : "500px",
+              maxHeight: window.innerWidth < 640 ? "none" : "500px"
+            }}>
               {loading ? (
                 <div className="p-4 text-center text-gray-500">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
@@ -284,12 +336,12 @@ const AdminNotifications = () => {
                             <span className="text-xs text-gray-500">
                               {formatTime(notification.createdAt)}
                             </span>
-                            {/* Delete Button */}
+                            {/* Delete Button - UPDATED to be always visible */}
                             <button
                               onClick={(e) =>
                                 deleteNotification(notification._id, e)
                               }
-                              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded-full transition-all duration-200"
+                              className="p-1 hover:bg-red-100 rounded-full transition-all duration-200"
                               title="Delete notification"
                             >
                               <MdDeleteForever className="text-red-500 text-md" />
@@ -302,27 +354,52 @@ const AdminNotifications = () => {
                         </p>
 
                         <div className="flex items-center justify-between text-xs text-gray-500 flex-wrap gap-1">
-                          <span className="truncate">
-                            Order: {notification.orderId}
-                          </span>
-                          <span className="font-semibold text-green-600 flex-shrink-0">
-                            ₹{notification.orderAmount?.toLocaleString()}
-                          </span>
+                          {notification.orderId && (
+                            <span className="truncate">
+                              Order: {notification.orderId}
+                            </span>
+                          )}
+                          {notification.orderAmount && (
+                            <span className="font-semibold text-green-600 flex-shrink-0">
+                              ₹{notification.orderAmount?.toLocaleString()}
+                            </span>
+                          )}
+                          {notification.returnId && (
+                            <span className="truncate">
+                              Return ID: {notification.returnId.substring(0, 8)}
+                              ...
+                            </span>
+                          )}
                         </div>
 
                         {/* Payment method badge */}
                         <div className="mt-2">
-                          <span
-                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                              notification.paymentMethod === "COD"
-                                ? "bg-orange-100 text-orange-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {notification.paymentMethod === "COD"
-                              ? "Cash on Delivery"
-                              : "Online Payment"}
-                          </span>
+                          {notification.paymentMethod && (
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                                notification.paymentMethod === "COD"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {notification.paymentMethod === "COD"
+                                ? "Cash on Delivery"
+                                : "Online Payment"}
+                            </span>
+                          )}
+                          {notification.returnType && (
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                                notification.returnType === "refund"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-purple-100 text-purple-800"
+                              }`}
+                            >
+                              {notification.returnType === "refund"
+                                ? "Refund"
+                                : "Exchange"}
+                            </span>
+                          )}
                         </div>
                       </div>
 

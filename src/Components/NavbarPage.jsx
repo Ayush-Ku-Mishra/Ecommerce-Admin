@@ -13,10 +13,6 @@ import Sidebar from "../Components/Sidebar";
 import { Context } from "../main";
 import axios from "axios";
 import toast from "react-hot-toast";
-import Logout from "./Logout";
-
-// Fallback logo - your original static logo
-import DefaultLogo from "../assets/LogoPickora.jpg";
 import AdminNotifications from "./AdminNotifications";
 
 // Helper to get initials from a name
@@ -29,11 +25,25 @@ const getInitials = (name = "User") => {
 
 const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isOpen, setIsOpen] = useState(false); // Add this missing state
   const { user, setIsAuthenticated, setUser } = useContext(Context);
   const [localUser, setLocalUser] = useState(null);
   const [currentLogo, setCurrentLogo] = useState("");
   const [logoLoading, setLogoLoading] = useState(true);
+  // Add state to track if sidebar was visible (for smooth transitions)
+  const [sidebarVisible, setSidebarVisible] = useState(sidebarOpen);
+
+  // Update the sidebarVisible state when sidebarOpen changes
+  useEffect(() => {
+    if (sidebarOpen) {
+      setSidebarVisible(true);
+    } else {
+      // Delay removing the sidebar from DOM to allow transition to complete
+      const timer = setTimeout(() => {
+        setSidebarVisible(false);
+      }, 300); // Match this with the transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [sidebarOpen]);
 
   useEffect(() => {
     if (!currentLogo) {
@@ -180,20 +190,31 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
         </div>
       )}
 
-      {/* Sidebar */}
-      {sidebarOpen && (
-        <div className="fixed top-0 left-0 h-screen w-64 z-40 transition-all duration-300">
-          <Sidebar
-            setSidebarOpen={setSidebarOpen}
-            currentLogo={currentLogo}
-            logoLoading={logoLoading}
-          />
-        </div>
-      )}
+      {/* Mobile overlay - only shown on mobile when sidebar is open */}
+      <div 
+        className={`fixed inset-0 bg-black lg:hidden z-30 transition-opacity duration-300 ${
+          sidebarOpen ? 'opacity-30' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      ></div>
+
+      {/* Sidebar with smooth transition */}
+      <div
+        className={`fixed top-0 left-0 h-screen w-64 z-40 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{ visibility: sidebarVisible ? 'visible' : 'hidden' }}
+      >
+        <Sidebar
+          setSidebarOpen={setSidebarOpen}
+          currentLogo={currentLogo}
+          logoLoading={logoLoading}
+        />
+      </div>
 
       {/* Main layout shift when sidebar is open */}
       <div
-        className={`flex-1 transition-all duration-600 ${
+        className={`flex-1 transition-all duration-300 ease-in-out ${
           sidebarOpen ? "lg:ml-64" : "ml-0"
         }`}
       >
@@ -216,14 +237,17 @@ const NavbarPage = ({ sidebarOpen, setSidebarOpen }) => {
             </Link>
 
             <div
-              className={`transition-all duration-500 ${
+              className={`transition-all duration-300 ${
                 sidebarOpen ? "lg:ml-20" : "ml-0"
               }`}
             >
               <Button
                 onClick={toggleSidebar}
-                className="!w-[40px] !h-[40px] !rounded-full !min-w-[40px]"
+                className="!w-[40px] !h-[40px] !rounded-full !min-w-[40px] transition-transform duration-300"
                 aria-label="Toggle Sidebar"
+                sx={{
+                  transform: sidebarOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}
               >
                 <HiOutlineMenuAlt1 className="text-[19px] text-[rgba(0,0,0,0.8)]" />
               </Button>

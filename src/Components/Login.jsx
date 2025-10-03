@@ -15,7 +15,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { firebaseApp } from "../firebase";
 const auth = getAuth(firebaseApp);
-const googleProvider = new GoogleAuthProvider();
 
 const Login = () => {
   const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context);
