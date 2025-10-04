@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { FaBoxes, FaClipboardList } from "react-icons/fa";
+import { FaBoxes, FaClipboardList, FaStar } from "react-icons/fa";
 import { MdOutlineImage, MdOutlineManageAccounts } from "react-icons/md";
 import { HiOutlineChevronDown, HiOutlineChevronRight } from "react-icons/hi";
 import { CgMenuGridR } from "react-icons/cg";
@@ -9,8 +9,8 @@ import { RxDashboard } from "react-icons/rx";
 import { FiUsers } from "react-icons/fi";
 import { IoCloseOutline } from "react-icons/io5";
 import { FaExchangeAlt } from "react-icons/fa";
-import { Context } from "../main"; 
-import { useNavigate } from "react-router-dom"; 
+import { Context } from "../main";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import {
@@ -20,7 +20,7 @@ import {
   DialogContentText,
   DialogTitle,
   Button,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 
 const menuConfig = [
@@ -57,7 +57,18 @@ const menuConfig = [
   },
   { label: "Users", icon: <FiUsers size={16} />, path: "/users" },
   { label: "Orders", icon: <FaClipboardList size={16} />, path: "/orders" },
-  // Add Return Management here
+  // Reviews Management
+  {
+    label: "Reviews",
+    icon: <FaStar size={16} />,
+    path: "/reviews",
+    children: [
+      { label: "Reviews Dashboard", path: "/reviews-dashboard" },
+      { label: "Reported Reviews", path: "/reported-reviews" },
+      { label: "Review Analytics", path: "/review-analytics" },
+    ],
+  },
+  // Return Management
   {
     label: "Returns",
     icon: <FaExchangeAlt size={16} />,
@@ -72,7 +83,12 @@ const menuConfig = [
     icon: <MdOutlineManageAccounts size={16} />,
     path: "/manage-logo",
   },
-  { label: "Logout", icon: <PiSignOutBold size={16} />, path: null, isLogout: true }, // Changed path to null, added isLogout flag
+  {
+    label: "Logout",
+    icon: <PiSignOutBold size={16} />,
+    path: null,
+    isLogout: true,
+  },
 ];
 
 const Sidebar = ({ setSidebarOpen }) => {
@@ -82,7 +98,7 @@ const Sidebar = ({ setSidebarOpen }) => {
   // Add state for logout dialog
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
-  
+
   // Add context and navigate hook
   const { setIsAuthenticated, setUser } = useContext(Context);
   const navigate = useNavigate();
@@ -175,9 +191,12 @@ const Sidebar = ({ setSidebarOpen }) => {
   const handleLogout = async () => {
     setLogoutLoading(true);
     try {
-      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`, {
-        withCredentials: true,
-      });
+      await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user/logout`,
+        {
+          withCredentials: true,
+        }
+      );
 
       setIsAuthenticated(false);
       setUser(null);
@@ -319,12 +338,12 @@ const Sidebar = ({ setSidebarOpen }) => {
         aria-labelledby="logout-dialog-title"
         aria-describedby="logout-dialog-description"
         sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: '12px',
-            padding: '8px',
-            maxWidth: '400px',
-            width: '100%'
-          }
+          "& .MuiDialog-paper": {
+            borderRadius: "12px",
+            padding: "8px",
+            maxWidth: "400px",
+            width: "100%",
+          },
         }}
       >
         <DialogTitle id="logout-dialog-title" sx={{ pb: 1 }}>
@@ -338,44 +357,48 @@ const Sidebar = ({ setSidebarOpen }) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
-          <Button 
+          <Button
             onClick={() => setLogoutDialogOpen(false)}
             disabled={logoutLoading}
             variant="outlined"
             sx={{
-              borderRadius: '8px',
-              textTransform: 'none',
+              borderRadius: "8px",
+              textTransform: "none",
               px: 3,
               py: 1,
-              borderColor: 'rgb(229, 231, 235)',
-              color: 'rgb(75, 85, 99)',
+              borderColor: "rgb(229, 231, 235)",
+              color: "rgb(75, 85, 99)",
               fontWeight: 500,
-              '&:hover': {
-                borderColor: 'rgb(209, 213, 219)',
-                backgroundColor: 'rgba(249, 250, 251, 0.1)'
-              }
+              "&:hover": {
+                borderColor: "rgb(209, 213, 219)",
+                backgroundColor: "rgba(249, 250, 251, 0.1)",
+              },
             }}
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleLogout}
             disabled={logoutLoading}
             variant="contained"
             sx={{
-              borderRadius: '8px',
-              textTransform: 'none',
+              borderRadius: "8px",
+              textTransform: "none",
               px: 3,
               py: 1,
-              backgroundColor: 'rgb(239, 68, 68)',
+              backgroundColor: "rgb(239, 68, 68)",
               fontWeight: 500,
-              '&:hover': {
-                backgroundColor: 'rgb(220, 38, 38)'
-              }
+              "&:hover": {
+                backgroundColor: "rgb(220, 38, 38)",
+              },
             }}
-            startIcon={logoutLoading ? <CircularProgress size={16} color="inherit" /> : null}
+            startIcon={
+              logoutLoading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : null
+            }
           >
-            {logoutLoading ? 'Logging out...' : 'Logout'}
+            {logoutLoading ? "Logging out..." : "Logout"}
           </Button>
         </DialogActions>
       </Dialog>
